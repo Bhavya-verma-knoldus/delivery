@@ -1,0 +1,29 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(compile, Some(71569ef7-239e-4f84-9dd5-4456dba164de), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: api / Compile / compile, Compile / compile[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 7 Scala sources and 1 Java source to /home/knoldus/Documents/event-driven-programming/delivery/api/target/scala-2.13/classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/app/com/nashtech/order/v1/NashtechOrderV1Client.scala:82:57: parameter stringBinder in method pathBindableDateTimeIso8601 is never used[0m
+[0m[[0m[31merror[0m] [0m[0m      implicit def pathBindableDateTimeIso8601(implicit stringBinder: QueryStringBindable[String]): PathBindable[_root_.org.joda.time.DateTime] = ApibuilderPathBindable(ApibuilderTypes.dateTimeIso8601)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                        ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/app/com/nashtech/order/v1/NashtechOrderV1Client.scala:83:64: parameter stringBinder in method queryStringBindableDateTimeIso8601 is never used[0m
+[0m[[0m[31merror[0m] [0m[0m      implicit def queryStringBindableDateTimeIso8601(implicit stringBinder: QueryStringBindable[String]): QueryStringBindable[_root_.org.joda.time.DateTime] = ApibuilderQueryStringBindable(ApibuilderTypes.dateTimeIso8601)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                               ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/app/com/nashtech/order/v1/NashtechOrderV1Client.scala:85:53: parameter stringBinder in method pathBindableDateIso8601 is never used[0m
+[0m[[0m[31merror[0m] [0m[0m      implicit def pathBindableDateIso8601(implicit stringBinder: QueryStringBindable[String]): PathBindable[_root_.org.joda.time.LocalDate] = ApibuilderPathBindable(ApibuilderTypes.dateIso8601)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/app/com/nashtech/order/v1/NashtechOrderV1Client.scala:86:60: parameter stringBinder in method queryStringBindableDateIso8601 is never used[0m
+[0m[[0m[31merror[0m] [0m[0m      implicit def queryStringBindableDateIso8601(implicit stringBinder: QueryStringBindable[String]): QueryStringBindable[_root_.org.joda.time.LocalDate] = ApibuilderQueryStringBindable(ApibuilderTypes.dateIso8601)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                           ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/app/com/nashtech/order/v1/NashtechOrderV1Client.scala:99:52: parameter ex in method errorMessage is never used[0m
+[0m[[0m[31merror[0m] [0m[0m      def errorMessage(key: String, value: String, ex: java.lang.Exception): String = {[0m
+[0m[[0m[31merror[0m] [0m[0m                                                   ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/conf/routes:5:1: type Orders is not a member of package controllers[0m
+[0m[[0m[31merror[0m] [0m[0mGET     /:merchant_id/orders/:number     controllers.Orders.getByNumber(merchant_id: String, number: String)[0m
+[0m[[0m[31merror[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/api/conf/routes:5:1: type Orders is not a member of package controllers[0m
+[0m[[0m[31merror[0m] [0m[0mGET     /:merchant_id/orders/:number     controllers.Orders.getByNumber(merchant_id: String, number: String)[0m
+[0m[[0m[31merror[0m] [0m[0m7 errors found[0m
+[0m[[0m[31merror[0m] [0m[0m(api / Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 1 s, completed 26-Sep-2023, 3:14:29 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
+[0m[[0m[0mdebug[0m] [0m[0mForcing garbage collection...[0m
+[0m[[0m[0minfo[0m] [0m[0mshutting down sbt server[0m

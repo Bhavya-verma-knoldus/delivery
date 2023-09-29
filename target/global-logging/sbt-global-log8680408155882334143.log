@@ -1,0 +1,19 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(compile, Some(9c1cb7e6-bc53-4d62-9c6b-bbc3fcbd1d8d), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / compile[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 8 Scala sources and 1 Java source to /home/knoldus/Documents/event-driven-programming/delivery/target/scala-2.13/classes ...[0m
+[0m[[0m[33mwarn[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/app/DeliveryControllers.scala:14:22: The outer reference in this type test cannot be checked at run time.[0m
+[0m[[0m[33mwarn[0m] [0m[0m    final case class HTTP200(body: com.nashtech.delivery.v1.models.Delivery) extends GetById[0m
+[0m[[0m[33mwarn[0m] [0m[0m                     ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/app/DeliveryControllers.scala:17:22: The outer reference in this type test cannot be checked at run time.[0m
+[0m[[0m[33mwarn[0m] [0m[0m    final case class Undocumented(result: play.api.mvc.Result) extends GetById[0m
+[0m[[0m[33mwarn[0m] [0m[0m                     ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/app/DeliveryControllers.scala:29:16: The outer reference in this type test cannot be checked at run time.[0m
+[0m[[0m[33mwarn[0m] [0m[0m          case r: GetById.HTTP200      => Status(200)(play.api.libs.json.Json.toJson(r.body))[0m
+[0m[[0m[33mwarn[0m] [0m[0m               ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/home/knoldus/Documents/event-driven-programming/delivery/app/DeliveryControllers.scala:32:16: The outer reference in this type test cannot be checked at run time.[0m
+[0m[[0m[33mwarn[0m] [0m[0m          case r: GetById.Undocumented => r.result[0m
+[0m[[0m[33mwarn[0m] [0m[0m               ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mfour warnings found[0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 4 s, completed 29-Sep-2023, 3:26:50 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
