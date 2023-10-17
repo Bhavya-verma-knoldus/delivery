@@ -19,4 +19,10 @@ class Deliveries @Inject() (
       }
     )
   }
+
+  override def post(
+                     request: play.api.mvc.Request[com.nashtech.delivery.v1.models.DeliveryForm],
+                     merchantId: String,
+                     body: com.nashtech.delivery.v1.models.DeliveryForm
+                   ): scala.concurrent.Future[Post] = ???
 }

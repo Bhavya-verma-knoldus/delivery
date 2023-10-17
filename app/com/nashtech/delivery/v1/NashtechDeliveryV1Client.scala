@@ -40,12 +40,32 @@ package com.nashtech.delivery.v1.models {
     contactInfo: com.nashtech.delivery.v1.models.Contact
   )
 
+  final case class DeliveryForm(
+    orderNumber: String,
+    merchantId: String,
+    origin: com.nashtech.delivery.v1.models.Address,
+    destination: com.nashtech.delivery.v1.models.Address,
+    contactInfo: com.nashtech.delivery.v1.models.Contact
+  )
+
+  final case class Error(
+    code: String,
+    message: String
+  )
+
 }
 
 package com.nashtech.delivery.v1.models {
 
   package object json {
     import play.api.libs.json.__
+    import play.api.libs.json.JsString
+    import play.api.libs.json.Writes
+    import play.api.libs.functional.syntax._
+    import com.nashtech.delivery.v1.models.json._
+    import io.apibuilder.common.v0.models.json._
+    import io.apibuilder.generator.v0.models.json._
+    import io.apibuilder.spec.v0.models.json._
 
     private[v1] implicit val jsonReadsUUID: play.api.libs.json.Reads[_root_.java.util.UUID] = __.read[String].map { str =>
       _root_.java.util.UUID.fromString(str)
@@ -191,6 +211,52 @@ package com.nashtech.delivery.v1.models {
         jsObjectDelivery(obj)
       }
     }
+
+    implicit def jsonReadsDeliveryDeliveryForm: play.api.libs.json.Reads[DeliveryForm] = {
+      for {
+        orderNumber <- (__ \ "order_number").read[String]
+        merchantId <- (__ \ "merchant_id").read[String]
+        origin <- (__ \ "origin").read[com.nashtech.delivery.v1.models.Address]
+        destination <- (__ \ "destination").read[com.nashtech.delivery.v1.models.Address]
+        contactInfo <- (__ \ "contact_info").read[com.nashtech.delivery.v1.models.Contact]
+      } yield DeliveryForm(orderNumber, merchantId, origin, destination, contactInfo)
+    }
+
+    def jsObjectDeliveryForm(obj: com.nashtech.delivery.v1.models.DeliveryForm): play.api.libs.json.JsObject = {
+      play.api.libs.json.Json.obj(
+        "order_number" -> play.api.libs.json.JsString(obj.orderNumber),
+        "merchant_id" -> play.api.libs.json.JsString(obj.merchantId),
+        "origin" -> jsObjectAddress(obj.origin),
+        "destination" -> jsObjectAddress(obj.destination),
+        "contact_info" -> jsObjectContact(obj.contactInfo)
+      )
+    }
+
+    implicit def jsonWritesDeliveryDeliveryForm: play.api.libs.json.Writes[DeliveryForm] = {
+      (obj: com.nashtech.delivery.v1.models.DeliveryForm) => {
+        jsObjectDeliveryForm(obj)
+      }
+    }
+
+    implicit def jsonReadsDeliveryError: play.api.libs.json.Reads[Error] = {
+      for {
+        code <- (__ \ "code").read[String]
+        message <- (__ \ "message").read[String]
+      } yield Error(code, message)
+    }
+
+    def jsObjectError(obj: com.nashtech.delivery.v1.models.Error): play.api.libs.json.JsObject = {
+      play.api.libs.json.Json.obj(
+        "code" -> play.api.libs.json.JsString(obj.code),
+        "message" -> play.api.libs.json.JsString(obj.message)
+      )
+    }
+
+    implicit def jsonWritesDeliveryError: play.api.libs.json.Writes[Error] = {
+      (obj: com.nashtech.delivery.v1.models.Error) => {
+        jsObjectError(obj)
+      }
+    }
   }
 }
 
@@ -201,6 +267,7 @@ package com.nashtech.delivery.v1 {
     import play.api.mvc.{PathBindable, QueryStringBindable}
 
     // import models directly for backwards compatibility with prior versions of the generator
+    import Core._
 
     object Core {
       implicit def pathBindableDateTimeIso8601(implicit stringBinder: QueryStringBindable[String]): PathBindable[_root_.org.joda.time.DateTime] = ApibuilderPathBindable(ApibuilderTypes.dateTimeIso8601)
@@ -311,6 +378,9 @@ package com.nashtech.delivery.v1 {
     defaultHeaders: Seq[(String, String)] = Nil
   ) extends interfaces.Client {
     import com.nashtech.delivery.v1.models.json._
+    import io.apibuilder.common.v0.models.json._
+    import io.apibuilder.generator.v0.models.json._
+    import io.apibuilder.spec.v0.models.json._
 
     private[this] val logger = play.api.Logger("com.nashtech.delivery.v1.Client")
 
@@ -329,6 +399,22 @@ package com.nashtech.delivery.v1 {
           case r if r.status == 401 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
           case r if r.status == 404 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
           case r => throw com.nashtech.delivery.v1.errors.FailedRequest(r.status, s"Unsupported response code[${r.status}]. Expected: 200, 401, 404")
+        }
+      }
+
+      override def post(
+        merchantId: String,
+        deliveryForm: com.nashtech.delivery.v1.models.DeliveryForm,
+        requestHeaders: Seq[(String, String)] = Nil
+      )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery] = {
+        val payload = play.api.libs.json.Json.toJson(deliveryForm)
+
+        _executeRequest("POST", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery", body = Some(payload), requestHeaders = requestHeaders).map {
+          case r if r.status == 200 => _root_.com.nashtech.delivery.v1.Client.parseJson("com.nashtech.delivery.v1.models.Delivery", r, _.validate[com.nashtech.delivery.v1.models.Delivery])
+          case r if r.status == 401 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
+          case r if r.status == 404 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
+          case r if r.status == 422 => throw com.nashtech.delivery.v1.errors.ErrorsResponse(r)
+          case r => throw com.nashtech.delivery.v1.errors.FailedRequest(r.status, s"Unsupported response code[${r.status}]. Expected: 200, 401, 404, 422")
         }
       }
     }
@@ -446,9 +532,27 @@ package com.nashtech.delivery.v1 {
       id: String,
       requestHeaders: Seq[(String, String)] = Nil
     )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery]
+
+    def post(
+      merchantId: String,
+      deliveryForm: com.nashtech.delivery.v1.models.DeliveryForm,
+      requestHeaders: Seq[(String, String)] = Nil
+    )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery]
   }
 
   package errors {
+
+    import com.nashtech.delivery.v1.models.json._
+    import io.apibuilder.common.v0.models.json._
+    import io.apibuilder.generator.v0.models.json._
+    import io.apibuilder.spec.v0.models.json._
+
+    final case class ErrorsResponse(
+      response: play.api.libs.ws.WSResponse,
+      message: Option[String] = None
+    ) extends Exception(message.getOrElse(s"${response.status}: ${response.body}")) {
+      lazy val errors = _root_.com.nashtech.delivery.v1.Client.parseJson("Seq[com.nashtech.delivery.v1.models.Error]", response, _.validate[Seq[com.nashtech.delivery.v1.models.Error]])
+    }
 
     final case class UnitResponse(status: Int) extends Exception(s"HTTP $status")
 
