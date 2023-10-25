@@ -2,22 +2,27 @@ package service
 
 import com.google.inject.ImplementedBy
 import com.nashtech.delivery.v1.models.{Address, Contact, Delivery}
-import db.Connection
-import doa.DAO
 import org.joda.time.DateTime
-
 import javax.inject.Singleton
 import scala.concurrent.Future
 
-//import play.api.db.Database
 
 @ImplementedBy(classOf[DeliveriesServiceImpl])
 trait DeliveriesService {
+  def addDelivery(delivery: Delivery): String
   def getByid(merchantId: String, id: String): Either[Seq[String], Delivery]
+
+  def getAll: Either[Seq[String], Delivery]
+
+  def updateById(merchantId: String, id: String): Either[Seq[String], Delivery]
+
+  def deleteById(merchantId: String): Future[String]
+
+  def deleteAll(): Future[String]
 }
 
 @Singleton
-class DeliveriesServiceImpl extends DAO {
+class DeliveriesServiceImpl extends DeliveriesService {
 //  private val db = Connection.connection()
 
   private val db: Map[String, Delivery] = Map(
@@ -40,7 +45,7 @@ class DeliveriesServiceImpl extends DAO {
     }
   }
 
-  def addUser(delivery: Delivery): Future[String] = ???
+  def addDelivery(delivery: Delivery): String = ???
 
   def getAll: Either[Seq[String], Delivery] = ???
 

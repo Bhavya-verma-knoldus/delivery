@@ -7,19 +7,38 @@ lazy val root = (project in file("."))
     name := "delivery"
   ).enablePlugins(PlayScala)
 
+libraryDependencies ++= Seq( jdbc )
+
+libraryDependencies += "org.json4s" %% "json4s-native" % "4.0.6"
+
 libraryDependencies ++= Seq(
   guice,
   ws,
+
   "com.typesafe.play" %% "play-json" % "2.9.4",
+  "com.typesafe.play" %% "play-json-joda" % "2.10.1",
   "com.typesafe.play" %% "play-server" % "2.8.20",
   "com.amazonaws" % "amazon-kinesis-client" % "1.14.10",
   "software.amazon.kinesis" % "amazon-kinesis-client" % "2.4.8",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
   "org.slf4j" % "slf4j-api" % "2.0.6",
   "ch.qos.logback" % "logback-classic" % "1.4.7",
-  "joda-time" % "joda-time" % "2.12.5",
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
+ "joda-time" % "joda-time" % "2.12.5",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2",
+  "org.postgresql" % "postgresql" % "42.6.0",
 )
+libraryDependencies ++= Seq(
+  "mysql" % "mysql-connector-java" % "5.1.41"
+)
+
+
+//libraryDependencies += "com.typesafe.play" %% "play-slick" % "5.2.0-M2"
+//
+//libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.5.0-M2"
+
+//libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC9"
+//libraryDependencies += "com.typesafe.slick" %% "slick-hikaricp" % "3.5.0-M2"
+//libraryDependencies += "org.mindrot" % "jbcrypt" % "0.4"
 
 dependencyOverrides ++= Seq(
   "com.google.inject" % "guice" % "5.1.0",
@@ -28,3 +47,8 @@ dependencyOverrides ++= Seq(
 libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "8.0.33"
 )
+
+libraryDependencies += "com.jakewharton" % "apibuilder" % "1.1.1"
+
+libraryDependencies += "org.playframework.anorm" %% "anorm" % "2.7.0"
+
