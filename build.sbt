@@ -10,8 +10,11 @@ lazy val root = (project in file("."))
 libraryDependencies ++= Seq(
   guice,
   ws,
+  "org.playframework.anorm" %% "anorm" % "2.7.0",
   "com.typesafe.play" %% "play-json" % "2.9.4",
   "com.typesafe.play" %% "play-server" % "2.8.20",
+  "com.typesafe.play" %% "play-json-joda" % "2.10.1",
+  "org.postgresql" % "postgresql" % "42.6.0",
   "com.amazonaws" % "amazon-kinesis-client" % "1.14.10",
   "software.amazon.kinesis" % "amazon-kinesis-client" % "2.4.8",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
