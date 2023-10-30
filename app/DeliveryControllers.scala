@@ -6,9 +6,6 @@
 package com.nashtech.delivery.v1.controllers
 
 import com.nashtech.delivery.v1.models.json._
-import io.apibuilder.common.v0.models.json._
-import io.apibuilder.generator.v0.models.json._
-import io.apibuilder.spec.v0.models.json._
 
 trait DeliveriesController extends play.api.mvc.BaseController {
 
