@@ -4,12 +4,16 @@ import com.nashtech.delivery.v1.controllers.DeliveriesController
 import database.PostgresConnection
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents, Request}
 import service.DeliveriesService
+import akka.actor._
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 import scala.concurrent.Future
 
 class Deliveries @Inject() (
   deliveriesService: DeliveriesService,
+  val controllerComponents: ControllerComponents,
+  @Named("delivery-journal-actor") actor: ActorRef
+) extends DeliveriesController {
   controllerComponents: ControllerComponents,
   postgresDAO: PostgresConnection
 ) extends   AbstractController(controllerComponents)  with DeliveriesController {
