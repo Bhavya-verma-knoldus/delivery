@@ -33,4 +33,30 @@ trait DeliveriesController extends play.api.mvc.BaseController {
         }(defaultExecutionContext)
   }
 
+  sealed trait Post extends Product with Serializable
+  object Post {
+    final case class HTTP200(body: com.nashtech.delivery.v1.models.Delivery) extends Post
+    case object HTTP401 extends Post
+    case object HTTP404 extends Post
+    final case class HTTP422(body: Seq[com.nashtech.delivery.v1.models.Error]) extends Post
+    final case class Undocumented(result: play.api.mvc.Result) extends Post
+  }
+
+  def post(
+      request: play.api.mvc.Request[com.nashtech.delivery.v1.models.DeliveryForm],
+      merchantId: String,
+      body: com.nashtech.delivery.v1.models.DeliveryForm
+  ): scala.concurrent.Future[Post]
+  final def post(merchantId: String): play.api.mvc.Action[com.nashtech.delivery.v1.models.DeliveryForm] =
+    Action.async(parse.json[com.nashtech.delivery.v1.models.DeliveryForm]) { request =>
+      post(request, merchantId, request.body)
+        .map {
+          case r: Post.HTTP200      => Status(200)(play.api.libs.json.Json.toJson(r.body))
+          case Post.HTTP401         => Status(401)(play.api.mvc.Results.EmptyContent())
+          case Post.HTTP404         => Status(404)(play.api.mvc.Results.EmptyContent())
+          case r: Post.HTTP422      => Status(422)(play.api.libs.json.Json.toJson(r.body))
+          case r: Post.Undocumented => r.result
+        }(defaultExecutionContext)
+    }
+
 }
