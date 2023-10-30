@@ -12,7 +12,7 @@ import javax.inject.Inject
 class PostgresConnection @Inject()(db: Database) {
   def getAll(sqlForD: String): Seq[Delivery] = {
     db.withConnection { implicit connection =>
-      SQL(sqlForD).as(deliveryParser.*)
+      SQL(sqlForD).as(com.nashtech.delivery.v1.anorm.parsers.Delivery.parser().*)
     }
   }
 
