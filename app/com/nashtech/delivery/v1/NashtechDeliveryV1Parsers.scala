@@ -164,7 +164,7 @@ package com.nashtech.delivery.v1.anorm.parsers {
         case code ~ message => {
           com.nashtech.delivery.v1.models.Error(
             code = code,
-            message = message
+            message = Seq(message)
           )
         }
       }
