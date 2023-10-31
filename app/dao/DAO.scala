@@ -61,7 +61,7 @@ class DAO @Inject()(db: Database) {
            |now(),
            |${deliveryForm.origin},
            |${deliveryForm.destination},
-           |${deliveryForm.contactInfo}
+           |${deliveryForm.contactInfo};
            |""".stripMargin
 
       query
@@ -78,7 +78,7 @@ class DAO @Inject()(db: Database) {
           |        destination = ${deliveryForm.destination},
           |        contact_info = ${deliveryForm.contactInfo},
           |        updated_at = now()
-          |     WHERE id = $id
+          |     WHERE id = $id;
           |""".stripMargin
 
       query
@@ -89,6 +89,7 @@ class DAO @Inject()(db: Database) {
         s"""
           |DELETE FROM deliveries
           |WHERE id = $id
+          |RETURNING *;
           |""".stripMargin
 
       query

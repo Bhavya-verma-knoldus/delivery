@@ -17,7 +17,9 @@ class Deliveries @Inject() (
   override def getById(request: Request[AnyContent], merchantId: String, id: String): Future[GetById] = {
     Future.successful(
       deliveriesService.getById(merchantId, id) match {
-        case Left(_) => GetById.HTTP404
+        case Left(_) =>
+          actor ! "Insert"
+          GetById.HTTP404
         case Right(delivery) => GetById.HTTP200(delivery)
 
       }
