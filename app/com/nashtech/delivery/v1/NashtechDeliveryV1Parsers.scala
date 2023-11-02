@@ -9,8 +9,6 @@ package com.nashtech.delivery.v1.anorm.parsers {
 
   import com.nashtech.delivery.v1.anorm.conversions.Standard._
 
-  import com.nashtech.delivery.v1.anorm.conversions.Types._
-
   object Address {
 
     def parserWithPrefix(prefix: String, sep: String = "_"): RowParser[com.nashtech.delivery.v1.models.Address] = parser(prefixOpt = Some(s"$prefix$sep"))

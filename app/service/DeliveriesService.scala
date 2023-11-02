@@ -16,7 +16,7 @@ trait DeliveriesService {
 
   def updateById(id: String, form: DeliveryForm): Either[Seq[String], Delivery]
 
-  def deleteById(id: String):  Either[Seq[String], Delivery]
+  def deleteById(merchantId: String):  Either[Seq[String], Delivery]
 
 }
 
@@ -59,8 +59,8 @@ class DeliveriesServiceImpl @Inject()(db: DAO) extends DeliveriesService {
     }
   }
 
-  def deleteById(id: String):Either[Seq[String], Delivery] = {
-    Try(db.deleteById(id)) match {
+  def deleteById(merchantId: String):Either[Seq[String], Delivery] = {
+    Try(db.deleteById(merchantId)) match {
       case Success(value) => Right(value)
       case Failure(e) => Left(Seq(e.getMessage))
     }
