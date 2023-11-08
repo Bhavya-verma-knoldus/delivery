@@ -42,7 +42,6 @@ package com.nashtech.delivery.v1.models {
 
   final case class DeliveryForm(
     orderNumber: String,
-    merchantId: String,
     origin: com.nashtech.delivery.v1.models.Address,
     destination: com.nashtech.delivery.v1.models.Address,
     contactInfo: com.nashtech.delivery.v1.models.Contact
@@ -208,17 +207,15 @@ package com.nashtech.delivery.v1.models {
     implicit def jsonReadsDeliveryDeliveryForm: play.api.libs.json.Reads[DeliveryForm] = {
       for {
         orderNumber <- (__ \ "order_number").read[String]
-        merchantId <- (__ \ "merchant_id").read[String]
         origin <- (__ \ "origin").read[com.nashtech.delivery.v1.models.Address]
         destination <- (__ \ "destination").read[com.nashtech.delivery.v1.models.Address]
         contactInfo <- (__ \ "contact_info").read[com.nashtech.delivery.v1.models.Contact]
-      } yield DeliveryForm(orderNumber, merchantId, origin, destination, contactInfo)
+      } yield DeliveryForm(orderNumber, origin, destination, contactInfo)
     }
 
     def jsObjectDeliveryForm(obj: com.nashtech.delivery.v1.models.DeliveryForm): play.api.libs.json.JsObject = {
       play.api.libs.json.Json.obj(
         "order_number" -> play.api.libs.json.JsString(obj.orderNumber),
-        "merchant_id" -> play.api.libs.json.JsString(obj.merchantId),
         "origin" -> jsObjectAddress(obj.origin),
         "destination" -> jsObjectAddress(obj.destination),
         "contact_info" -> jsObjectContact(obj.contactInfo)

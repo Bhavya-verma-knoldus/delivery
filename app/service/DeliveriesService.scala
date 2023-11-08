@@ -22,21 +22,7 @@ trait DeliveriesService {
 
 @Singleton
 class DeliveriesServiceImpl @Inject()(db: DAO) extends DeliveriesService {
-//  private val db = Connection.connection()
-//
-//  private var database: Map[String, Delivery] = Map(
-//    "1" -> Delivery(
-//      id = "1",
-//      orderNumber = "1",
-//      merchantId = "X",
-//      estimatedDeliveryDate = DateTime.now(),
-//      origin = Address(country = Some("IND")),
-//      destination = Address(Some("USA")),
-//      contactInfo = Contact(
-//        firstName = Some("Bhavya")
-//      )
-//    )
-//  )
+
   override def getById(merchantId: String, id: String): Either[Seq[String], Delivery] = {
     Try(db.getById(merchantId, id)) match {
       case Success(value) => Right(value)

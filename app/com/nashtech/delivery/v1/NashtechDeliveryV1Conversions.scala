@@ -6,9 +6,9 @@
 package com.nashtech.delivery.v1.anorm.conversions {
 
   import anorm.{Column, MetaDataItem, TypeDoesNotMatch}
+  import play.api.libs.json.JodaReads._
 
   import scala.util.{Failure, Success, Try}
-//  import play.api.libs.json.JodaReads._
 
   /**
     * Conversions to collections of objects using JSON.
@@ -51,26 +51,6 @@ package com.nashtech.delivery.v1.anorm.conversions {
 
   }
 
-//  import play.api.libs.json._
-//
-//     object JodaDateTimeReads extends Reads[org.joda.time.DateTime] {
-//      def reads(json: JsValue): JsResult[org.joda.time.DateTime] = {
-//        json.validate[Long].map { millis =>
-//          new org.joda.time.DateTime(millis)
-//        }
-//      }
-//    }
-//
-//     object JodaDateTimeWrites extends Writes[org.joda.time.DateTime] {
-//      def writes(dateTime: org.joda.time.DateTime): JsValue = {
-//        Json.toJson(dateTime.getMillis)
-//      }
-//    }
-//
-//    implicit val mapDateTimeReads: Reads[Map[String, org.joda.time.DateTime]] = Reads.map(JodaDateTimeReads)
-//    implicit val mapDateTimeWrites: Writes[Map[String, org.joda.time.DateTime]] = Writes.map(JodaDateTimeWrites)
-
-
   object Types {
     import com.nashtech.delivery.v1.models.json._
     implicit val columnToSeqDeliveryAddress: Column[Seq[_root_.com.nashtech.delivery.v1.models.Address]] = Util.parser { _.as[Seq[_root_.com.nashtech.delivery.v1.models.Address]] }
@@ -96,10 +76,10 @@ package com.nashtech.delivery.v1.anorm.conversions {
     implicit val columnToMapInt: Column[Map[String, Int]] = Util.parser { _.as[Map[String, Int]] }
     implicit val columnToSeqLong: Column[Seq[Long]] = Util.parser { _.as[Seq[Long]] }
     implicit val columnToMapLong: Column[Map[String, Long]] = Util.parser { _.as[Map[String, Long]] }
-//    implicit val columnToSeqLocalDate: Column[Seq[_root_.org.joda.time.LocalDate]] = Util.parser { _.as[Seq[_root_.org.joda.time.LocalDate]] }
-//    implicit val columnToMapLocalDate: Column[Map[String, _root_.org.joda.time.LocalDate]] = Util.parser { _.as[Map[String, _root_.org.joda.time.LocalDate]] }
-//    implicit val columnToSeqDateTime: Column[Seq[_root_.org.joda.time.DateTime]] = Util.parser { _.as[Seq[_root_.org.joda.time.DateTime]] }
-//    implicit val columnToMapDateTime: Column[Map[String, _root_.org.joda.time.DateTime]] = Util.parser { _.as[Map[String, _root_.org.joda.time.DateTime]] }
+    implicit val columnToSeqLocalDate: Column[Seq[_root_.org.joda.time.LocalDate]] = Util.parser { _.as[Seq[_root_.org.joda.time.LocalDate]] }
+    implicit val columnToMapLocalDate: Column[Map[String, _root_.org.joda.time.LocalDate]] = Util.parser { _.as[Map[String, _root_.org.joda.time.LocalDate]] }
+    implicit val columnToSeqDateTime: Column[Seq[_root_.org.joda.time.DateTime]] = Util.parser { _.as[Seq[_root_.org.joda.time.DateTime]] }
+    implicit val columnToMapDateTime: Column[Map[String, _root_.org.joda.time.DateTime]] = Util.parser { _.as[Map[String, _root_.org.joda.time.DateTime]] }
     implicit val columnToSeqBigDecimal: Column[Seq[BigDecimal]] = Util.parser { _.as[Seq[BigDecimal]] }
     implicit val columnToMapBigDecimal: Column[Map[String, BigDecimal]] = Util.parser { _.as[Map[String, BigDecimal]] }
     implicit val columnToSeqJsObject: Column[Seq[_root_.play.api.libs.json.JsObject]] = Util.parser { _.as[Seq[_root_.play.api.libs.json.JsObject]] }

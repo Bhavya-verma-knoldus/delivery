@@ -108,4 +108,5 @@ trait DeliveriesController extends play.api.mvc.BaseController {
         case r: Delete.Undocumented => r.result
       }(defaultExecutionContext)
   }
+
 }

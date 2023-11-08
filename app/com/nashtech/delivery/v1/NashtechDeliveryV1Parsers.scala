@@ -123,21 +123,18 @@ package com.nashtech.delivery.v1.anorm.parsers {
 
     def parser(
       orderNumber: String = "order_number",
-      merchantId: String = "merchant_id",
       originPrefix: String = "origin",
       destinationPrefix: String = "destination",
       contactInfoPrefix: String = "contact_info",
       prefixOpt: Option[String] = None
     ): RowParser[com.nashtech.delivery.v1.models.DeliveryForm] = {
       SqlParser.str(prefixOpt.getOrElse("") + orderNumber) ~
-      SqlParser.str(prefixOpt.getOrElse("") + merchantId) ~
       com.nashtech.delivery.v1.anorm.parsers.Address.parserWithPrefix(prefixOpt.getOrElse("") + originPrefix) ~
       com.nashtech.delivery.v1.anorm.parsers.Address.parserWithPrefix(prefixOpt.getOrElse("") + destinationPrefix) ~
       com.nashtech.delivery.v1.anorm.parsers.Contact.parserWithPrefix(prefixOpt.getOrElse("") + contactInfoPrefix) map {
-        case orderNumber ~ merchantId ~ origin ~ destination ~ contactInfo => {
+        case orderNumber ~ origin ~ destination ~ contactInfo => {
           com.nashtech.delivery.v1.models.DeliveryForm(
             orderNumber = orderNumber,
-            merchantId = merchantId,
             origin = origin,
             destination = destination,
             contactInfo = contactInfo
@@ -158,11 +155,11 @@ package com.nashtech.delivery.v1.anorm.parsers {
       prefixOpt: Option[String] = None
     ): RowParser[com.nashtech.delivery.v1.models.Error] = {
       SqlParser.str(prefixOpt.getOrElse("") + code) ~
-      SqlParser.str(prefixOpt.getOrElse("") + message) map {
+      SqlParser.get[Seq[String]](prefixOpt.getOrElse("") + message) map {
         case code ~ message => {
           com.nashtech.delivery.v1.models.Error(
             code = code,
-            message = Seq(message)
+            message = message
           )
         }
       }
