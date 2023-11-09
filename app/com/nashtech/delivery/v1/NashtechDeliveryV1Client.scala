@@ -42,7 +42,6 @@ package com.nashtech.delivery.v1.models {
 
   final case class DeliveryForm(
     orderNumber: String,
-    merchantId: String,
     origin: com.nashtech.delivery.v1.models.Address,
     destination: com.nashtech.delivery.v1.models.Address,
     contactInfo: com.nashtech.delivery.v1.models.Contact
@@ -50,7 +49,7 @@ package com.nashtech.delivery.v1.models {
 
   final case class Error(
     code: String,
-    message: String
+    message: Seq[String]
   )
 
 }
@@ -208,17 +207,15 @@ package com.nashtech.delivery.v1.models {
     implicit def jsonReadsDeliveryDeliveryForm: play.api.libs.json.Reads[DeliveryForm] = {
       for {
         orderNumber <- (__ \ "order_number").read[String]
-        merchantId <- (__ \ "merchant_id").read[String]
         origin <- (__ \ "origin").read[com.nashtech.delivery.v1.models.Address]
         destination <- (__ \ "destination").read[com.nashtech.delivery.v1.models.Address]
         contactInfo <- (__ \ "contact_info").read[com.nashtech.delivery.v1.models.Contact]
-      } yield DeliveryForm(orderNumber, merchantId, origin, destination, contactInfo)
+      } yield DeliveryForm(orderNumber, origin, destination, contactInfo)
     }
 
     def jsObjectDeliveryForm(obj: com.nashtech.delivery.v1.models.DeliveryForm): play.api.libs.json.JsObject = {
       play.api.libs.json.Json.obj(
         "order_number" -> play.api.libs.json.JsString(obj.orderNumber),
-        "merchant_id" -> play.api.libs.json.JsString(obj.merchantId),
         "origin" -> jsObjectAddress(obj.origin),
         "destination" -> jsObjectAddress(obj.destination),
         "contact_info" -> jsObjectContact(obj.contactInfo)
@@ -234,14 +231,14 @@ package com.nashtech.delivery.v1.models {
     implicit def jsonReadsDeliveryError: play.api.libs.json.Reads[Error] = {
       for {
         code <- (__ \ "code").read[String]
-        message <- (__ \ "message").read[String]
+        message <- (__ \ "message").read[Seq[String]]
       } yield Error(code, message)
     }
 
     def jsObjectError(obj: com.nashtech.delivery.v1.models.Error): play.api.libs.json.JsObject = {
       play.api.libs.json.Json.obj(
         "code" -> play.api.libs.json.JsString(obj.code),
-        "message" -> play.api.libs.json.JsString(obj.message)
+        "message" -> play.api.libs.json.Json.toJson(obj.message)
       )
     }
 
@@ -370,9 +367,6 @@ package com.nashtech.delivery.v1 {
     defaultHeaders: Seq[(String, String)] = Nil
   ) extends interfaces.Client {
     import com.nashtech.delivery.v1.models.json._
-//    import io.apibuilder.common.v0.models.json._
-//    import io.apibuilder.generator.v0.models.json._
-//    import io.apibuilder.spec.v0.models.json._
 
     private[this] val logger = play.api.Logger("com.nashtech.delivery.v1.Client")
 
@@ -426,21 +420,18 @@ package com.nashtech.delivery.v1 {
         }
       }
 
-//      override def delete(
-//        merchantId: String,
-//        value: Unit,
-//        requestHeaders: Seq[(String, String)] = Nil
-//      )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[Unit] = {
-//        val payload = play.api.libs.json.Json.toJson(value)
-//
-//        _executeRequest("DELETE", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery", body = Some(payload), requestHeaders = requestHeaders).map {
-//          case r if r.status == 200 => ()
-//          case r if r.status == 401 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
-//          case r if r.status == 404 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
-//          case r if r.status == 422 => throw com.nashtech.delivery.v1.errors.ErrorResponse(r)
-//          case r => throw com.nashtech.delivery.v1.errors.FailedRequest(r.status, s"Unsupported response code[${r.status}]. Expected: 200, 401, 404, 422")
-//        }
-//      }
+      override def delete(
+        merchantId: String,
+        requestHeaders: Seq[(String, String)] = Nil
+      )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[Unit] = {
+        _executeRequest("DELETE", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery", requestHeaders = requestHeaders).map {
+          case r if r.status == 200 => ()
+          case r if r.status == 401 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
+          case r if r.status == 404 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
+          case r if r.status == 422 => throw com.nashtech.delivery.v1.errors.ErrorResponse(r)
+          case r => throw com.nashtech.delivery.v1.errors.FailedRequest(r.status, s"Unsupported response code[${r.status}]. Expected: 200, 401, 404, 422")
+        }
+      }
     }
 
     def _requestHolder(path: String): play.api.libs.ws.WSRequest = {
@@ -569,11 +560,10 @@ package com.nashtech.delivery.v1 {
       requestHeaders: Seq[(String, String)] = Nil
     )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery]
 
-//    def delete(
-//      merchantId: String,
-//      value: Unit,
-//      requestHeaders: Seq[(String, String)] = Nil
-//    )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[Unit]
+    def delete(
+      merchantId: String,
+      requestHeaders: Seq[(String, String)] = Nil
+    )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[Unit]
   }
 
   package errors {
