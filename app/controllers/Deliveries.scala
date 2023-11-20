@@ -4,7 +4,7 @@ import akka.actor._
 import com.nashtech.delivery.v1.controllers.DeliveriesController
 import com.nashtech.delivery.v1.models.Error
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents, Request}
-import service.DeliveriesService
+import service.{Consumer, DeliveriesService}
 
 import javax.inject.{Inject, Named}
 import scala.concurrent.Future
@@ -12,7 +12,8 @@ import scala.concurrent.Future
 class Deliveries @Inject()(
     deliveriesService: DeliveriesService,
     override val controllerComponents: ControllerComponents,
-    @Named("delivery-journal-actor") actor: ActorRef
+    @Named("delivery-journal-actor") actor: ActorRef,
+    consumer: Consumer
   ) extends AbstractController(controllerComponents) with DeliveriesController {
   override def getById(request: Request[AnyContent], merchantId: String, id: String): Future[GetById] = {
     Future.successful(
@@ -20,7 +21,9 @@ class Deliveries @Inject()(
         case Left(_) =>
           actor ! "Insert"
           GetById.HTTP404
-        case Right(delivery) => GetById.HTTP200(delivery)
+        case Right(delivery) =>
+          consumer.consume()
+          GetById.HTTP200(delivery)
 
       }
     )
