@@ -6,7 +6,7 @@ import org.joda.time.DateTime
 import play.api.db.Database
 import play.api.libs.json.{JsValue, Json}
 
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Failure, Success, Try}
 
 abstract class DBPollActor(schema: String = "public", table: String) extends PollActor {
 
@@ -97,13 +97,12 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
   private def insertQuery(record: ProcessQueueDelivery) = {
     SQL(
       s"""
-         |INSERT INTO $journalTable (journal_id, processing_queue_id, id, order_number, merchant_id, estimated_delivery_date,
+         |INSERT INTO $journalTable (processing_queue_id, id, order_number, merchant_id, estimated_delivery_date,
          | origin, destination, contact_info, created_at,
          |updated_at, journal_timestamp, journal_operation
          |)
          |VALUES
          |(
-         |{journal_id},
          |{processing_queue_id},
          |{id},
          |{order_number},
@@ -119,7 +118,6 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
          |)
          |returning *
          |""".stripMargin)
-      .on("journal_id" -> Random.nextLong(1000))
       .on("processing_queue_id" -> record.processingQueueId)
       .on("id" -> record.id)
       .on("order_number" -> record.orderNumber)
@@ -161,18 +159,17 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 }
+
 case class ProcessQueueDelivery(
-                                 processingQueueId: Int,
-                                 id: String,
-                                 orderNumber: String,
-                                 merchantId: String,
-                                 estimateDeliveryDate: DateTime,
-                                 origin: JsValue,
-                                 destination: JsValue,
-                                 contactInfo: JsValue,
-                                 createdAt: DateTime,
-                                 updatedAt: DateTime,
-                                 operation: String
-                               )
-
-
+  processingQueueId: Int,
+  id: String,
+  orderNumber: String,
+  merchantId: String,
+  estimateDeliveryDate: DateTime,
+  origin: JsValue,
+  destination: JsValue,
+  contactInfo: JsValue,
+  createdAt: DateTime,
+  updatedAt: DateTime,
+  operation: String
+)
