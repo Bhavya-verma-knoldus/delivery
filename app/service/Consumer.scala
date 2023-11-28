@@ -1,34 +1,42 @@
 package service
 
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.kinesis.KinesisClient
-import software.amazon.awssdk.services.kinesis.model.{CreateStreamRequest, DescribeStreamRequest, GetRecordsRequest, GetShardIteratorRequest, ShardIteratorType}
+import software.amazon.awssdk.services.kinesis.KinesisAsyncClient
+import software.amazon.awssdk.services.kinesis.model._
 
+import java.util.concurrent.CompletableFuture
 import scala.util.{Failure, Success, Try}
-import software.amazon.awssdk.http.AbortableInputStream
+
 class Consumer {
-  val kinesisClient = KinesisClient.builder()
+
+  val credentials: AwsBasicCredentials = AwsBasicCredentials.create("test", "test")
+
+  val credentialsProvider: StaticCredentialsProvider = StaticCredentialsProvider.create(credentials)
+
+  val kinesisClient: KinesisAsyncClient = KinesisAsyncClient.builder()
     .region(Region.US_EAST_1)
+    .credentialsProvider(credentialsProvider)
     .endpointOverride(new java.net.URI("http://localhost:4566"))
-    .httpClient(UrlConnectionHttpClient.builder().build())
+    .httpClient(NettyNioAsyncHttpClient.builder().build())
     .build()
-  def consume() = {
-    //    val data = SdkBytes.fromString("Order()", Charset.defaultCharset())
+
+  def consume(): Unit = {
+
     println("******************")
-    val shardId = "shardId-000000000000"
-//
-//    kinesisClient.createStream(
-//      CreateStreamRequest.builder()
-//        .streamName("lambda-stream-3")
-//        .shardCount(1)
-//        .build())
 
-//    kinesisClient.describeStreamSummary(DescribeStreamSummaryRequest)
-    val stream = kinesisClient.describeStream(DescribeStreamRequest.builder().streamName("lambda-stream-3").build())
-//    println("\n***************************"+stream+"\n")
+    //    kinesisClient.describeStreamSummary(DescribeStreamSummaryRequest)
 
-     val streamName = stream.streamDescription().streamName()
+    val stream = describeStream("lambda-stream-0") match {
+      case Left(_) => createStream("lambda-stream-0").get().asInstanceOf[DescribeStreamResponse]
+      case Right(stream) => stream.get()
+    }
+
+    //    println("\n***************************"+stream+"\n")
+
+    val shardId = stream.streamDescription().shards().get(0).shardId()
+    val streamName = stream.streamDescription().streamName()
     System.setProperty("aws.cborEnabled", "false")
 
     val getShardIteratorRequest = GetShardIteratorRequest.builder()
@@ -37,7 +45,7 @@ class Consumer {
       .shardIteratorType(ShardIteratorType.LATEST)
       .build()
 
-    val shardIterator = kinesisClient.getShardIterator(getShardIteratorRequest).getValueForField("ShardIterator", classOf[String])
+    val shardIterator = kinesisClient.getShardIterator(getShardIteratorRequest).get().getValueForField("ShardIterator", classOf[String])
     println(s"\n\n$shardIterator\n")
 
     val getRecordRequest: GetRecordsRequest = GetRecordsRequest.builder()
@@ -48,9 +56,23 @@ class Consumer {
       case Failure(exception) =>
         println(s"Error while getting records: ${exception.getMessage}")
       case Success(value) =>
-        println("Received data: " + value.toString)
+        println("Received data: ______________________________________________" + value.get().records())
         println("Response content: " + value.toString)
     }
+  }
 
+  private def createStream(streamName: String): CompletableFuture[CreateStreamResponse] = {
+    kinesisClient.createStream(
+      CreateStreamRequest.builder()
+        .streamName(streamName)
+        .shardCount(1)
+        .build())
+  }
+
+  private def describeStream(streamName: String): Either[software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException, CompletableFuture[DescribeStreamResponse]] = {
+    Try(kinesisClient.describeStream(DescribeStreamRequest.builder().streamName(streamName).build())) match {
+      case Failure(exception: software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException) => Left(exception)
+      case Success(value) => Right(value)
+    }
   }
 }
