@@ -22,9 +22,13 @@ class Deliveries @Inject()(
           actor ! "Insert"
           GetById.HTTP404
         case Right(delivery) =>
-          consumer.consume()
+          consumer.consume() match {
+            case Left(value) =>
+              println(s"Failed to consume the records: $value")
+              getById(request, merchantId, id)
+            case Right(result) => println("Received data: ______________________________________________" + result.records())
+          }
           GetById.HTTP200(delivery)
-
       }
     )
   }
