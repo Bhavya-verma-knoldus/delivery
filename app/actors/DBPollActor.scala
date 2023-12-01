@@ -134,7 +134,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
 
   private def setErrorsQuery(id: Int, ex: Throwable) = {
     s"""
-       |update $processingTable set error_message = '${ex.getMessage}'
+       |update $processingTable set error_message = '${ex.getMessage}', error = '${ex.getClass.getSimpleName}'
        | where processing_queue_id = $id
        |""".stripMargin
   }
