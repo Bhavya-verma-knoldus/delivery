@@ -77,7 +77,8 @@ class DAO @Inject()(db: Database) {
            |origin =  {origin}::jsonb,
            |destination = {destination}::jsonb,
            |contact_info = {contact_info}::jsonb
-           |WHERE merchant_id = {merchant_id} RETURNING *
+           |WHERE merchant_id = {merchant_id}
+           |RETURNING *;
            |""".stripMargin)
         .on("order_number" -> form.orderNumber)
         .on("estimated_delivery_date" -> "2023-10-31 15:00:00+05:30")

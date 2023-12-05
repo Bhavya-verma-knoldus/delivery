@@ -1,13 +1,14 @@
 package actors
 
 import akka.actor.ActorSystem
+import play.api.db.Database
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Success, Try}
 
 @Singleton
-class DeliveryJournalActor @Inject()(system: ActorSystem)
+class DeliveryJournalActor @Inject()(system: ActorSystem, override val db: Database)
   extends DBPollActor(table = "deliveries") {
 
   println("actor initialized")
@@ -16,20 +17,20 @@ class DeliveryJournalActor @Inject()(system: ActorSystem)
     // super.preStart()
     println("[DeliveryJournalActor] Inside preStart")
     log.info("[DeliveryJournalActor] Inside preStart")
-//    self ! "Insert"
+    //    self ! "Insert"
   }
 
   def schedule() = {
     system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "Insert")(system.dispatcher)
   }
 
-  override def process(record: ProcessQueueOrder): Try[Unit] = {
+  override def process(record: ProcessQueueDelivery): Try[Unit] = {
     record.operation match {
-      case "Insert" | "Update" => // TODO: Publish using kinesis
+      case "INSERT" | "UPDATE" => // TODO: Publish using kinesis
         Try {
           log.info("Inside DeliveryJournalActor")
         }
-      case "Delete" => Success(())
+      case "DELETE" => Success(())
     }
   }
 }
