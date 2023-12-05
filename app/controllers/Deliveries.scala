@@ -24,7 +24,6 @@ class Deliveries @Inject()(
         case Right(delivery) =>
           consumer.run
           GetById.HTTP200(delivery)
-
       }
     )
   }
