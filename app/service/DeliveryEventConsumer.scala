@@ -33,9 +33,9 @@ class DeliveryEventConsumer @Inject()(
                                        deliveryDao: DAO
                                      ) extends LazyLogging {
 
-  val credentials = AwsBasicCredentials.create("test", "test")
+  val credentials: AwsBasicCredentials = AwsBasicCredentials.create("test", "test")
 
-  val credentialsProvider = StaticCredentialsProvider.create(credentials)
+  val credentialsProvider: StaticCredentialsProvider = StaticCredentialsProvider.create(credentials)
 
 
   val kinesisClient: KinesisAsyncClient = KinesisAsyncClient.builder()
