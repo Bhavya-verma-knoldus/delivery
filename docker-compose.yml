@@ -10,7 +10,7 @@ services:
       - "127.0.0.1:4576:4576"
       - "127.0.0.1:4572:4572"
     environment:
-      - SERVICES=kinesis, dynamodb
+      - SERVICES=kinesis, dynamodb, cloudwatch
       - EDGE_PORT=4566
       - DATA_DIR=/tmp/localstack/data
       - DEFAULT_REGION=us-east-1

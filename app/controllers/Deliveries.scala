@@ -22,7 +22,7 @@ class Deliveries @Inject()(
           actor ! "Insert"
           GetById.HTTP404
         case Right(delivery) =>
-          consumer.run
+//          consumer.run
           GetById.HTTP200(delivery)
       }
     )

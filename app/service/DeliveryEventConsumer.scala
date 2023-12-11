@@ -1,10 +1,8 @@
 package service
 
-import com.nashtech.delivery.v1.models.Delivery
-import com.nashtech.delivery.v1.models.json.jsonReadsDeliveryDelivery
 import com.typesafe.scalalogging.LazyLogging
 import dao.DAO
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, __}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
@@ -22,6 +20,8 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.{ExecutionException, TimeUnit, TimeoutException}
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProcessorFactory {
@@ -29,21 +29,10 @@ class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProce
 }
 
 class DeliveryEventConsumer @Inject()(
-                                       applicationName: String,
-                                       deliveryDao: DAO
-                                     ) extends LazyLogging {
-
-  val credentials: AwsBasicCredentials = AwsBasicCredentials.create("test", "test")
-
-  val credentialsProvider: StaticCredentialsProvider = StaticCredentialsProvider.create(credentials)
-
-
-  val kinesisClient: KinesisAsyncClient = KinesisAsyncClient.builder()
-    .region(Region.US_EAST_1)
-    .credentialsProvider(credentialsProvider)
-    .endpointOverride(new java.net.URI("http://localhost:4566"))
-    .httpClient(NettyNioAsyncHttpClient.builder().build())
-    .build()
+  applicationName: String,
+  deliveryDao: DAO
+) extends LazyLogging {
+  initialize()
     //    //    val data = SdkBytes.fromString("Order()", Charset.defaultCharset())
     //    println("******************")
     ////    val shardId = "shardId-000000000000"
@@ -74,12 +63,46 @@ class DeliveryEventConsumer @Inject()(
     //      .shardIterator(shardIterator.get())
     //      .build()
 
-    def run(): Unit = {
-      val dynamoClient = DynamoDbAsyncClient.builder().region(Region.US_EAST_1).build()
-      val cloudWatchClient = CloudWatchAsyncClient.builder().region(Region.US_EAST_1).build()
+
+  def initialize(): Future[Unit] = {
+
+    val credentials = AwsBasicCredentials.create("test", "test")
+
+    val credentialsProvider = StaticCredentialsProvider.create(credentials)
+
+    val kinesisClient: KinesisAsyncClient = KinesisAsyncClient.builder()
+      .region(Region.US_EAST_1)
+      .credentialsProvider(credentialsProvider)
+      .endpointOverride(new java.net.URI("http://localhost:4566"))
+      .httpClient(NettyNioAsyncHttpClient.builder().build())
+      .build()
+
+    Future(run(kinesisClient))
+  }
+
+    def run(kinesisClient: KinesisAsyncClient): Unit = {
+      val credentials = AwsBasicCredentials.create("test", "test")
+      val credentialsProvider = StaticCredentialsProvider.create(credentials)
+
+      val dynamoClient = DynamoDbAsyncClient
+        .builder()
+        .region(Region.US_EAST_1)
+        .credentialsProvider(credentialsProvider)
+        .endpointOverride(new java.net.URI("http://localhost:4566"))
+        .httpClient(NettyNioAsyncHttpClient.builder().build())
+        .build()
+
+      val cloudWatchClient = CloudWatchAsyncClient
+        .builder()
+        .credentialsProvider(credentialsProvider)
+        .endpointOverride(new java.net.URI("http://localhost:4566"))
+        .httpClient(NettyNioAsyncHttpClient.builder().build())
+        .region(Region.US_EAST_1)
+        .build()
+
       val configsBuilder = new ConfigsBuilder(
         "order-stream",
-        applicationName,
+        "delivery-application",
         kinesisClient,
         dynamoClient,
         cloudWatchClient,
@@ -146,15 +169,37 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
 
     val eventString = StandardCharsets.UTF_8.decode(record.data).toString
 
-    logger.info(
+    println(
       s"Processing record pk: ${record.partitionKey()} -- Data: $eventString"
     )
+    final case class Order(
+      id: String,
+      number: String,
+      merchantId: String,
+      submittedAt: _root_.org.joda.time.DateTime,
+      total: BigDecimal
+    )
+
     val eventJson = Json.parse(eventString)
-    val event = Try(eventJson.as[Delivery])
+    implicit val jsonReadsJodaDateTime: play.api.libs.json.Reads[_root_.org.joda.time.DateTime] = __.read[String].map { str =>
+      _root_.org.joda.time.format.ISODateTimeFormat.dateTimeParser.parseDateTime(str)
+    }
+
+    implicit def jsonReadsOrderOrder: play.api.libs.json.Reads[Order] = {
+      for {
+        id <- (__ \ "id").read[String]
+        number <- (__ \ "number").read[String]
+        merchantId <- (__ \ "merchant_id").read[String]
+        submittedAt <- (__ \ "submitted_at").read[_root_.org.joda.time.DateTime]
+        total <- (__ \ "total").read[BigDecimal]
+      } yield Order(id, number, merchantId, submittedAt, total)
+    }
+
+    val event = Try(eventJson.as[Order])
 
     event match {
-      case Success(order) => logger.info(s"Consumed Order. $order")
-      case Failure(e) => logger.info(s"Failed to consume. $e")
+      case Success(order) => println(s"Consumed Order. $order")
+      case Failure(e) => println(s"Failed to consume. $e")
     }
   }
 
