@@ -10,3 +10,7 @@ class ActorsModule extends AbstractModule with AkkaGuiceSupport {
     bindActor[DeliveryJournalActor]("delivery-journal-actor")
   }
 }
+//
+//object ActorsModule {
+//  def withIoDispatcher(props: Props): Props = props.withDispatcher("io-dispatcher")
+//}
