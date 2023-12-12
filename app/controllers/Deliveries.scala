@@ -8,6 +8,7 @@ import service.{DeliveriesService, DeliveryEventConsumer}
 
 import javax.inject.{Inject, Named}
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 class Deliveries @Inject()(
     deliveriesService: DeliveriesService,
@@ -16,16 +17,17 @@ class Deliveries @Inject()(
     consumer: DeliveryEventConsumer
   ) extends AbstractController(controllerComponents) with DeliveriesController {
   override def getById(request: Request[AnyContent], merchantId: String, id: String): Future[GetById] = {
-    Future.successful(
-      deliveriesService.getById(merchantId, id) match {
-        case Left(_) =>
-          actor ! "Insert"
-          GetById.HTTP404
-        case Right(delivery) =>
-//          consumer.run
-          GetById.HTTP200(delivery)
-      }
-    )
+    Try {
+      deliveriesService.getById(merchantId, id)
+    } match {
+      case Success(Right(delivery)) =>
+        Future.successful(GetById.HTTP200(delivery))
+      case Success(Left(_)) =>
+        actor ! "Insert"
+        Future.successful(GetById.HTTP404)
+      case Failure(_) =>
+        Future.successful(GetById.HTTP404)
+    }
   }
 
   override def post(

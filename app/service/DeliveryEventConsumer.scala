@@ -1,8 +1,10 @@
 package service
 
+import com.nashtech.order.v1.models.Order
+import com.nashtech.order.v1.models.json.jsonReadsOrderOrder
 import com.typesafe.scalalogging.LazyLogging
 import dao.DAO
-import play.api.libs.json.{Json, __}
+import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
@@ -29,42 +31,12 @@ class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProce
 }
 
 class DeliveryEventConsumer @Inject()(
-  applicationName: String,
-  deliveryDao: DAO
-) extends LazyLogging {
+                                       deliveryDao: DAO
+                                     ) extends LazyLogging {
+
   initialize()
-    //    //    val data = SdkBytes.fromString("Order()", Charset.defaultCharset())
-    //    println("******************")
-    ////    val shardId = "shardId-000000000000"
-    ////
-    ////    kinesisClient.createStream(
-    ////      CreateStreamRequest.builder()
-    ////        .streamName("lambda-stream-3")
-    ////        .shardCount(1)
-    ////        .build())
-    //
-    ////    kinesisClient.describeStreamSummary(DescribeStreamSummaryRequest)
-    //    val stream = kinesisClient.describeStream(DescribeStreamRequest.builder().streamName("lambda-stream-3").build())
-    ////    println("\n***************************"+stream+"\n")
-    //
-    //     val streamName = stream.streamDescription().streamName()
-    //    System.setProperty("aws.cborEnabled", "false")
-    //
-    //    val getShardIteratorRequest = GetShardIteratorRequest.builder()
-    //      .streamName(streamName)
-    //      .shardId(shardId)
-    //      .shardIteratorType(ShardIteratorType.LATEST)
-    //      .build()
-    //
-    //    val shardIterator = kinesisClient.getShardIterator(getShardIteratorRequest).getValueForField("ShardIterator", classOf[String])
-    //    println(s"\n\n$shardIterator\n")
-    //
-    //    val getRecordRequest: GetRecordsRequest = GetRecordsRequest.builder()
-    //      .shardIterator(shardIterator.get())
-    //      .build()
 
-
-  def initialize(): Future[Unit] = {
+  private def initialize(): Future[Unit] = {
 
     val credentials = AwsBasicCredentials.create("test", "test")
 
@@ -80,72 +52,72 @@ class DeliveryEventConsumer @Inject()(
     Future(run(kinesisClient))
   }
 
-    def run(kinesisClient: KinesisAsyncClient): Unit = {
-      val credentials = AwsBasicCredentials.create("test", "test")
-      val credentialsProvider = StaticCredentialsProvider.create(credentials)
+  private def run(kinesisClient: KinesisAsyncClient): Unit = {
+    val credentials = AwsBasicCredentials.create("test", "test")
+    val credentialsProvider = StaticCredentialsProvider.create(credentials)
 
-      val dynamoClient = DynamoDbAsyncClient
-        .builder()
-        .region(Region.US_EAST_1)
-        .credentialsProvider(credentialsProvider)
-        .endpointOverride(new java.net.URI("http://localhost:4566"))
-        .httpClient(NettyNioAsyncHttpClient.builder().build())
-        .build()
+    val dynamoClient = DynamoDbAsyncClient
+      .builder()
+      .region(Region.US_EAST_1)
+      .credentialsProvider(credentialsProvider)
+      .endpointOverride(new java.net.URI("http://localhost:4566"))
+      .httpClient(NettyNioAsyncHttpClient.builder().build())
+      .build()
 
-      val cloudWatchClient = CloudWatchAsyncClient
-        .builder()
-        .credentialsProvider(credentialsProvider)
-        .endpointOverride(new java.net.URI("http://localhost:4566"))
-        .httpClient(NettyNioAsyncHttpClient.builder().build())
-        .region(Region.US_EAST_1)
-        .build()
+    val cloudWatchClient = CloudWatchAsyncClient
+      .builder()
+      .credentialsProvider(credentialsProvider)
+      .endpointOverride(new java.net.URI("http://localhost:4566"))
+      .httpClient(NettyNioAsyncHttpClient.builder().build())
+      .region(Region.US_EAST_1)
+      .build()
 
-      val configsBuilder = new ConfigsBuilder(
-        "order-stream",
-        "delivery-application",
-        kinesisClient,
-        dynamoClient,
-        cloudWatchClient,
-        UUID.randomUUID().toString,
-        new DeliveryEventProcessorFactory(deliveryDao)
-      )
+    val configsBuilder = new ConfigsBuilder(
+      "order-stream",
+      "delivery-application",
+      kinesisClient,
+      dynamoClient,
+      cloudWatchClient,
+      UUID.randomUUID().toString,
+      new DeliveryEventProcessorFactory(deliveryDao)
+    )
 
-      val scheduler = new Scheduler(
-        configsBuilder.checkpointConfig,
-        configsBuilder.coordinatorConfig,
-        configsBuilder.leaseManagementConfig,
-        configsBuilder.lifecycleConfig,
-        configsBuilder.metricsConfig,
-        configsBuilder.processorConfig,
-        configsBuilder.retrievalConfig
-      )
+    val scheduler = new Scheduler(
+      configsBuilder.checkpointConfig,
+      configsBuilder.coordinatorConfig,
+      configsBuilder.leaseManagementConfig,
+      configsBuilder.lifecycleConfig,
+      configsBuilder.metricsConfig,
+      configsBuilder.processorConfig,
+      configsBuilder.retrievalConfig
+    )
 
-      val schedulerThread = new Thread(scheduler)
-      schedulerThread.setDaemon(true)
-      schedulerThread.start()
+    val schedulerThread = new Thread(scheduler)
+    schedulerThread.setDaemon(true)
+    schedulerThread.start()
 
-      val reader = new BufferedReader(new InputStreamReader(System.in))
+    val reader = new BufferedReader(new InputStreamReader(System.in))
 
-      try reader.readLine
-      catch {
-        case ioException: IOException =>
-          logger.error("Caught exception while waiting for confirm. Shutting down.", ioException)
-      }
-
-      val gracefulShutdownFuture = scheduler.startGracefulShutdown
-      logger.info("Waiting up to 20 seconds for shutdown to complete.")
-      try gracefulShutdownFuture.get(20, TimeUnit.SECONDS)
-      catch {
-        case _: InterruptedException =>
-          logger.info("Interrupted while waiting for graceful shutdown. Continuing.")
-        case e: ExecutionException =>
-          logger.error("Exception while executing graceful shutdown.", e)
-        case _: TimeoutException =>
-          logger.error("Timeout while waiting for shutdown. Scheduler may not have exited.")
-      }
-      logger.info("Completed, shutting down now.")
-
+    try reader.readLine
+    catch {
+      case ioException: IOException =>
+        logger.error("Caught exception while waiting for confirm. Shutting down.", ioException)
     }
+
+    val gracefulShutdownFuture = scheduler.startGracefulShutdown
+    logger.info("Waiting up to 20 seconds for shutdown to complete.")
+    try gracefulShutdownFuture.get(20, TimeUnit.SECONDS)
+    catch {
+      case _: InterruptedException =>
+        logger.info("Interrupted while waiting for graceful shutdown. Continuing.")
+      case e: ExecutionException =>
+        logger.error("Exception while executing graceful shutdown.", e)
+      case _: TimeoutException =>
+        logger.error("Timeout while waiting for shutdown. Scheduler may not have exited.")
+    }
+    logger.info("Completed, shutting down now.")
+
+  }
 }
 
 class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor with LazyLogging {
@@ -172,29 +144,8 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
     println(
       s"Processing record pk: ${record.partitionKey()} -- Data: $eventString"
     )
-    final case class Order(
-      id: String,
-      number: String,
-      merchantId: String,
-      submittedAt: _root_.org.joda.time.DateTime,
-      total: BigDecimal
-    )
 
     val eventJson = Json.parse(eventString)
-    implicit val jsonReadsJodaDateTime: play.api.libs.json.Reads[_root_.org.joda.time.DateTime] = __.read[String].map { str =>
-      _root_.org.joda.time.format.ISODateTimeFormat.dateTimeParser.parseDateTime(str)
-    }
-
-    implicit def jsonReadsOrderOrder: play.api.libs.json.Reads[Order] = {
-      for {
-        id <- (__ \ "id").read[String]
-        number <- (__ \ "number").read[String]
-        merchantId <- (__ \ "merchant_id").read[String]
-        submittedAt <- (__ \ "submitted_at").read[_root_.org.joda.time.DateTime]
-        total <- (__ \ "total").read[BigDecimal]
-      } yield Order(id, number, merchantId, submittedAt, total)
-    }
-
     val event = Try(eventJson.as[Order])
 
     event match {
@@ -203,34 +154,25 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
     }
   }
 
-    override def leaseLost(leaseLostInput: LeaseLostInput): Unit =
-      println("Lost lease, so terminating.")
+  override def leaseLost(leaseLostInput: LeaseLostInput): Unit =
+    println("Lost lease, so terminating.")
 
-    override def shardEnded(shardEndedInput: ShardEndedInput): Unit =
-      try {
-        // Important to checkpoint after reaching end of shard, so to start processing data from child shards.
-        println("Reached shard end checkpointing.")
-        shardEndedInput.checkpointer.checkpoint()
-      } catch {
-        case e: Throwable =>
-          println("Exception while checkpointing at shard end. Giving up.", e)
-      }
+  override def shardEnded(shardEndedInput: ShardEndedInput): Unit =
+    try {
+      // Important to checkpoint after reaching end of shard, so to start processing data from child shards.
+      println("Reached shard end checkpointing.")
+      shardEndedInput.checkpointer.checkpoint()
+    } catch {
+      case e: Throwable =>
+        println("Exception while checkpointing at shard end. Giving up.", e)
+    }
 
-    override def shutdownRequested(shutdownRequestedInput: ShutdownRequestedInput): Unit =
-      try {
-        println("Scheduler is shutting down, checkpointing.")
-        shutdownRequestedInput.checkpointer().checkpoint()
-      } catch {
-        case e: Throwable =>
-          println("Exception while checkpointing at requested shutdown. Giving up.", e)
-      }
+  override def shutdownRequested(shutdownRequestedInput: ShutdownRequestedInput): Unit =
+    try {
+      println("Scheduler is shutting down, checkpointing.")
+      shutdownRequestedInput.checkpointer().checkpoint()
+    } catch {
+      case e: Throwable =>
+        println("Exception while checkpointing at requested shutdown. Giving up.", e)
+    }
 }
-
-
-//Try(kinesisClient.getRecords(getRecordRequest)) match {
-//  case Failure(exception) =>
-//    println(s"Error while getting records: ${exception.getMessage}")
-//  case Success(value) =>
-//    println("Received data: " + value.toString)
-//    println("Response content: " + value.toString)
-//}

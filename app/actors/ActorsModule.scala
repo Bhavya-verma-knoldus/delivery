@@ -1,6 +1,5 @@
 package actors
 
-import akka.actor.Props
 import com.google.inject.AbstractModule
 import play.api.libs.concurrent.AkkaGuiceSupport
 
@@ -11,7 +10,3 @@ class ActorsModule extends AbstractModule with AkkaGuiceSupport {
     bindActor[DeliveryJournalActor]("delivery-journal-actor")
   }
 }
-//
-//object ActorsModule {
-//  def withIoDispatcher(props: Props): Props = props.withDispatcher("io-dispatcher")
-//}
