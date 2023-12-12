@@ -15,7 +15,6 @@ class DeliveryJournalActor @Inject()(system: ActorSystem, override val db: Datab
 
   override def preStart(): Unit = {
     // super.preStart()
-    println("[DeliveryJournalActor] Inside preStart")
     log.info("[DeliveryJournalActor] Inside preStart")
     //    self ! "Insert"
   }
