@@ -4,26 +4,30 @@ import akka.actor._
 import com.nashtech.delivery.v1.controllers.DeliveriesController
 import com.nashtech.delivery.v1.models.Error
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents, Request}
-import service.DeliveriesService
+import service.{DeliveriesService, DeliveryEventConsumer}
 
 import javax.inject.{Inject, Named}
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 class Deliveries @Inject()(
     deliveriesService: DeliveriesService,
     override val controllerComponents: ControllerComponents,
-    @Named("delivery-journal-actor") actor: ActorRef
+    @Named("delivery-journal-actor") actor: ActorRef,
+    consumer: DeliveryEventConsumer
   ) extends AbstractController(controllerComponents) with DeliveriesController {
   override def getById(request: Request[AnyContent], merchantId: String, id: String): Future[GetById] = {
-    Future.successful(
-      deliveriesService.getById(merchantId, id) match {
-        case Left(_) =>
-          actor ! "Insert"
-          GetById.HTTP404
-        case Right(delivery) => GetById.HTTP200(delivery)
-
-      }
-    )
+    Try {
+      deliveriesService.getById(merchantId, id)
+    } match {
+      case Success(Right(delivery)) =>
+        Future.successful(GetById.HTTP200(delivery))
+      case Success(Left(_)) =>
+        actor ! "Insert"
+        Future.successful(GetById.HTTP404)
+      case Failure(_) =>
+        Future.successful(GetById.HTTP404)
+    }
   }
 
   override def post(

@@ -1,6 +1,5 @@
 package actors
 
-import akka.actor.Props
 import com.google.inject.AbstractModule
 import play.api.libs.concurrent.AkkaGuiceSupport
 
