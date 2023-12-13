@@ -38,7 +38,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
 
   }
 
-  private def safeProcessRecord(record: ProcessQueueDelivery) = {
+  private def safeProcessRecord(record: ProcessQueueDelivery): Int = {
     Try {
       log.info("Inside safeProcessRecord method")
       process(record)
@@ -53,19 +53,19 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 
-  private def deleteProcessingQueueRecord(id: Int) = {
+  private def deleteProcessingQueueRecord(id: Int): Int = {
     db.withConnection { implicit connection =>
       SQL(deleteQuery(id)).executeUpdate()
     }
   }
 
-  private def insertJournalRecord(record: ProcessQueueDelivery) = {
+  private def insertJournalRecord(record: ProcessQueueDelivery): Nothing = {
     db.withConnection { implicit connection =>
       insertQuery(record).executeInsert()
     }
   }
 
-  private def setErrors(processingQueueId: Int, throwable: Throwable) = {
+  private def setErrors(processingQueueId: Int, throwable: Throwable): Int = {
     db.withConnection { implicit connection =>
       SQL(setErrorsQuery(processingQueueId, throwable)).executeUpdate()
     }
@@ -77,7 +77,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 
-  private def baseQuery =
+  private def baseQuery: String =
     s"""
        |select processing_queue_id, id, order_number, merchant_id, estimated_delivery_date, origin, destination, contact_info, created_at,
        |updated_at,operation
@@ -85,12 +85,12 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
        |order by created_at asc limit 1
        |""".stripMargin
 
-  private def deleteQuery(id: Int) =
+  private def deleteQuery(id: Int): String =
     s"""
        |delete from ${processingTable} where processing_queue_id = $id
        |""".stripMargin
 
-  private def insertQuery(record: ProcessQueueDelivery) = {
+  private def insertQuery(record: ProcessQueueDelivery): SimpleSql[Row] = {
     SQL(
       s"""
          |INSERT INTO $journalTable (processing_queue_id, id, order_number, merchant_id, estimated_delivery_date,
@@ -128,7 +128,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
       .on("journal_operation" -> record.operation)
   }
 
-  private def setErrorsQuery(id: Int, ex: Throwable) = {
+  private def setErrorsQuery(id: Int, ex: Throwable): String = {
     s"""
        |update $processingTable set error_message = '${ex.getMessage}', error = '${ex.getClass.getSimpleName}'
        | where processing_queue_id = $id
@@ -157,15 +157,15 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
 }
 
 case class ProcessQueueDelivery(
-  processingQueueId: Int,
-  id: String,
-  orderNumber: String,
-  merchantId: String,
-  estimateDeliveryDate: DateTime,
-  origin: JsValue,
-  destination: JsValue,
-  contactInfo: JsValue,
-  createdAt: DateTime,
-  updatedAt: DateTime,
-  operation: String
-)
+   processingQueueId: Int,
+   id: String,
+   orderNumber: String,
+   merchantId: String,
+   estimateDeliveryDate: DateTime,
+   origin: JsValue,
+   destination: JsValue,
+   contactInfo: JsValue,
+   createdAt: DateTime,
+   updatedAt: DateTime,
+   operation: String
+  )
