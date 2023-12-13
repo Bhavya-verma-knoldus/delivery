@@ -31,8 +31,8 @@ class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProce
 }
 
 class DeliveryEventConsumer @Inject()(
-                                       deliveryDao: DAO
-                                     ) extends LazyLogging {
+  deliveryDao: DAO
+) extends LazyLogging {
 
   initialize()
 
