@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.{Actor, ActorLogging, ActorSystem}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Cancellable}
 import akka.dispatch.MessageDispatcher
 
 import javax.inject.Singleton
@@ -15,18 +15,19 @@ object PollActorMessage {
 
 @Singleton
 trait PollActor extends Actor with ActorLogging {
+
   import PollActorMessage._
 
   val system: ActorSystem = context.system
-  val pollContext: MessageDispatcher = system.dispatchers.lookup("poll-context")
+  private val pollContext: MessageDispatcher = system.dispatchers.lookup("poll-context")
 
-  def initialDelay: FiniteDuration = FiniteDuration(10L, SECONDS)
+  private def initialDelay: FiniteDuration = FiniteDuration(10L, SECONDS)
 
   def delay: FiniteDuration = FiniteDuration(10, SECONDS)
 
   def processRecord(): Unit
 
-  def startPolling() = {
+  def startPolling(): Cancellable = {
     system.scheduler.scheduleWithFixedDelay(initialDelay, delay, self, Poll)(pollContext)
   }
 

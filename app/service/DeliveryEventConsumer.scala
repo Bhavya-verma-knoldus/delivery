@@ -31,8 +31,8 @@ class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProce
 }
 
 class DeliveryEventConsumer @Inject()(
-                                       deliveryDao: DAO
-                                     ) extends LazyLogging {
+  deliveryDao: DAO
+) extends LazyLogging {
 
   initialize()
 
@@ -160,7 +160,6 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
   override def shardEnded(shardEndedInput: ShardEndedInput): Unit =
     try {
       // Important to checkpoint after reaching end of shard, so to start processing data from child shards.
-      println("Reached shard end checkpointing.")
       shardEndedInput.checkpointer.checkpoint()
     } catch {
       case e: Throwable =>
@@ -169,7 +168,6 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
 
   override def shutdownRequested(shutdownRequestedInput: ShutdownRequestedInput): Unit =
     try {
-      println("Scheduler is shutting down, checkpointing.")
       shutdownRequestedInput.checkpointer().checkpoint()
     } catch {
       case e: Throwable =>

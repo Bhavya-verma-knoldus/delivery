@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Cancellable}
 import play.api.db.Database
 
 import javax.inject.{Inject, Singleton}
@@ -15,12 +15,11 @@ class DeliveryJournalActor @Inject()(system: ActorSystem, override val db: Datab
 
   override def preStart(): Unit = {
     // super.preStart()
-    println("[DeliveryJournalActor] Inside preStart")
     log.info("[DeliveryJournalActor] Inside preStart")
     //    self ! "Insert"
   }
 
-  def schedule() = {
+  def schedule(): Cancellable = {
     system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "Insert")(system.dispatcher)
   }
 

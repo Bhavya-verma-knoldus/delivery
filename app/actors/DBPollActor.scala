@@ -8,7 +8,23 @@ import play.api.libs.json.{JsValue, Json}
 
 import scala.util.{Failure, Success, Try}
 
+case class ProcessQueueDelivery(
+  processingQueueId: Int,
+  id: String,
+  orderNumber: String,
+  merchantId: String,
+  estimateDeliveryDate: DateTime,
+  origin: JsValue,
+  destination: JsValue,
+  contactInfo: JsValue,
+  createdAt: DateTime,
+  updatedAt: DateTime,
+  operation: String
+)
+
 abstract class DBPollActor(schema: String = "public", table: String) extends PollActor {
+
+  import DBPollActor._
 
   def db: Database
 
@@ -35,10 +51,9 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     log.info("Inside processRecord method")
     val record = getEarliestRecord(processingTable)
     safeProcessRecord(record)
-
   }
 
-  private def safeProcessRecord(record: ProcessQueueDelivery) = {
+  private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
     Try {
       log.info("Inside safeProcessRecord method")
       process(record)
@@ -53,31 +68,34 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 
-  private def deleteProcessingQueueRecord(id: Int) = {
+  private def deleteProcessingQueueRecord(id: Int): Int = {
     db.withConnection { implicit connection =>
-      SQL(deleteQuery(id)).executeUpdate()
+      SQL(deleteQuery(id, processingTable)).executeUpdate()
     }
   }
 
-  private def insertJournalRecord(record: ProcessQueueDelivery) = {
+  private def insertJournalRecord(record: ProcessQueueDelivery): Unit = {
     db.withConnection { implicit connection =>
-      insertQuery(record).executeInsert()
+      insertQuery(record, journalTable).executeInsert()
     }
+    ()
   }
 
-  private def setErrors(processingQueueId: Int, throwable: Throwable) = {
+  private def setErrors(processingQueueId: Int, throwable: Throwable): Int = {
     db.withConnection { implicit connection =>
-      SQL(setErrorsQuery(processingQueueId, throwable)).executeUpdate()
+      SQL(setErrorsQuery(processingQueueId, throwable, processingTable)).executeUpdate()
     }
   }
 
   private def getEarliestRecord(processingTable: String): ProcessQueueDelivery = {
     db.withConnection { implicit connection =>
-      SQL(baseQuery).as(processingQueueDeliveryParser().single)
+      SQL(baseQuery(processingTable)).as(processingQueueDeliveryParser().single)
     }
   }
+}
 
-  private def baseQuery =
+object DBPollActor {
+  private def baseQuery(processingTable: String): String =
     s"""
        |select processing_queue_id, id, order_number, merchant_id, estimated_delivery_date, origin, destination, contact_info, created_at,
        |updated_at,operation
@@ -85,12 +103,12 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
        |order by created_at asc limit 1
        |""".stripMargin
 
-  private def deleteQuery(id: Int) =
+  private def deleteQuery(id: Int, processingTable: String): String =
     s"""
        |delete from ${processingTable} where processing_queue_id = $id
        |""".stripMargin
 
-  private def insertQuery(record: ProcessQueueDelivery) = {
+  private def insertQuery(record: ProcessQueueDelivery, journalTable: String): SimpleSql[Row] = {
     SQL(
       s"""
          |INSERT INTO $journalTable (processing_queue_id, id, order_number, merchant_id, estimated_delivery_date,
@@ -128,7 +146,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
       .on("journal_operation" -> record.operation)
   }
 
-  private def setErrorsQuery(id: Int, ex: Throwable) = {
+  private def setErrorsQuery(id: Int, ex: Throwable, processingTable: String): String = {
     s"""
        |update $processingTable set error_message = '${ex.getMessage}', error = '${ex.getClass.getSimpleName}'
        | where processing_queue_id = $id
@@ -155,17 +173,3 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 }
-
-case class ProcessQueueDelivery(
-  processingQueueId: Int,
-  id: String,
-  orderNumber: String,
-  merchantId: String,
-  estimateDeliveryDate: DateTime,
-  origin: JsValue,
-  destination: JsValue,
-  contactInfo: JsValue,
-  createdAt: DateTime,
-  updatedAt: DateTime,
-  operation: String
-)
