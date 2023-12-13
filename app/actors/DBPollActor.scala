@@ -38,7 +38,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
 
   }
 
-  private def safeProcessRecord(record: ProcessQueueDelivery): Int = {
+  private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
     Try {
       log.info("Inside safeProcessRecord method")
       process(record)
@@ -59,10 +59,11 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 
-  private def insertJournalRecord(record: ProcessQueueDelivery): Nothing = {
+  private def insertJournalRecord(record: ProcessQueueDelivery): Unit = {
     db.withConnection { implicit connection =>
       insertQuery(record).executeInsert()
     }
+    ()
   }
 
   private def setErrors(processingQueueId: Int, throwable: Throwable): Int = {
