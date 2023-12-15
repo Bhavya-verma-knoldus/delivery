@@ -16,17 +16,14 @@ class Deliveries @Inject()(
     @Named("delivery-journal-actor") actor: ActorRef
   ) extends AbstractController(controllerComponents) with DeliveriesController {
   override def getById(request: Request[AnyContent], merchantId: String, id: String): Future[GetById] = {
-    Try {
-      deliveriesService.getById(merchantId, id)
-    } match {
-      case Success(Right(delivery)) =>
-        Future.successful(GetById.HTTP200(delivery))
-      case Success(Left(_)) =>
-        actor ! "INSERT"
-        Future.successful(GetById.HTTP404)
-      case Failure(_) =>
-        Future.successful(GetById.HTTP404)
-    }
+    Future.successful(
+      deliveriesService.getById(merchantId, id) match {
+        case Left(_) =>
+          GetById.HTTP404
+        case Right(delivery) =>
+          GetById.HTTP200(delivery)
+      }
+    )
   }
 
   override def post(
