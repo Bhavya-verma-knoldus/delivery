@@ -13,8 +13,7 @@ import scala.util.{Failure, Success, Try}
 class Deliveries @Inject()(
     deliveriesService: DeliveriesService,
     override val controllerComponents: ControllerComponents,
-    @Named("delivery-journal-actor") actor: ActorRef,
-    consumer: DeliveryEventConsumer
+    @Named("delivery-journal-actor") actor: ActorRef
   ) extends AbstractController(controllerComponents) with DeliveriesController {
   override def getById(request: Request[AnyContent], merchantId: String, id: String): Future[GetById] = {
     Try {
@@ -23,7 +22,7 @@ class Deliveries @Inject()(
       case Success(Right(delivery)) =>
         Future.successful(GetById.HTTP200(delivery))
       case Success(Left(_)) =>
-        actor ! "Insert"
+        actor ! "INSERT"
         Future.successful(GetById.HTTP404)
       case Failure(_) =>
         Future.successful(GetById.HTTP404)

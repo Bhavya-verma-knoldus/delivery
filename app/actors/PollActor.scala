@@ -41,13 +41,12 @@ trait PollActor extends Actor with ActorLogging {
   private def safeProcessMessage(): Unit = {
     Try {
       log.info("Inside safeProcessMessage method")
-      println("Inside safeProcessMessage method")
       processRecord()
     }.recover {
       case ex =>
         log.info("Discontinuing with safeProcessMessage method")
         println("Discontinuing with safeProcessMessage method")
-        log.error(cause = ex, message = "Error processing messages")
+        //log.error(cause = ex, message = "Error processing messages")
     }
   }
 }

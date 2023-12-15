@@ -2,13 +2,21 @@ package actors
 
 import akka.actor.{ActorSystem, Cancellable}
 import play.api.db.Database
+import service.DeliveryEventConsumer
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.kinesis.KinesisAsyncClient
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Success, Try}
 
 @Singleton
-class DeliveryJournalActor @Inject()(system: ActorSystem, override val db: Database)
+class DeliveryJournalActor @Inject()(system: ActorSystem,
+                                     deliveryEventConsumer: DeliveryEventConsumer,
+                                     override val db: Database)
   extends DBPollActor(table = "deliveries") {
 
   println("actor initialized")
@@ -16,18 +24,19 @@ class DeliveryJournalActor @Inject()(system: ActorSystem, override val db: Datab
   override def preStart(): Unit = {
     // super.preStart()
     log.info("[DeliveryJournalActor] Inside preStart")
-    //    self ! "Insert"
+    //        self ! "Insert"
+    startPolling()
   }
 
   def schedule(): Cancellable = {
-    system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "Insert")(system.dispatcher)
+    system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "INSERT")(system.dispatcher)
   }
 
   override def process(record: ProcessQueueDelivery): Try[Unit] = {
     record.operation match {
-      case "INSERT" | "UPDATE" => // TODO: Publish using kinesis
+      case "INSERT" | "UPDATE" =>
         Try {
-          log.info("Inside DeliveryJournalActor")
+          deliveryEventConsumer.initialize()
         }
       case "DELETE" => Success(())
     }

@@ -48,6 +48,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
   def process(record: ProcessQueueDelivery): Try[Unit]
 
   override def processRecord(): Unit = {
+    println("Inside ProcessRecord Method")
     log.info("Inside processRecord method")
     val record = getEarliestRecord(processingTable)
     safeProcessRecord(record)
