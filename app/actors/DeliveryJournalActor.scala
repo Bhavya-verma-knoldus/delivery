@@ -22,9 +22,7 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
   println("actor initialized")
 
   override def preStart(): Unit = {
-    // super.preStart()
     log.info("[DeliveryJournalActor] Inside preStart")
-    //        self ! "Insert"
     startPolling()
   }
 
@@ -32,12 +30,10 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
     system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "INSERT")(system.dispatcher)
   }
 
-  override def process(record: ProcessQueueDelivery): Try[Unit] = {
+  override def process(record: ProcessQueueDelivery): Unit = {
     record.operation match {
       case "INSERT" | "UPDATE" =>
-        Try {
-          deliveryEventConsumer.initialize()
-        }
+        deliveryEventConsumer.initialize()
       case "DELETE" => Success(())
     }
   }
