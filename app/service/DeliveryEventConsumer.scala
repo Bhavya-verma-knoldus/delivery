@@ -34,9 +34,7 @@ class DeliveryEventConsumer @Inject()(
   deliveryDao: DAO
 ) extends LazyLogging {
 
-  initialize()
-
-  private def initialize(): Future[Unit] = {
+  def initialize(): Future[Unit] = {
 
     val credentials = AwsBasicCredentials.create("test", "test")
 
