@@ -4,6 +4,7 @@ import anorm._
 import com.nashtech.delivery.v1.anorm.conversions.Standard.columnToJsValue
 import org.joda.time.DateTime
 import play.api.db.Database
+import play.api.i18n.Lang.logger
 import play.api.libs.json.{JsValue, Json}
 
 import scala.util.{Failure, Success, Try}
@@ -42,29 +43,29 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
   startPolling()
 
   override def preStart(): Unit = {
-    log.info("[DBPollActor] Pre-Start")
+    logger.info("[DBPollActor] Pre-Start")
   }
 
   def process(record: ProcessQueueDelivery): Unit
 
   override def processRecord(): Unit = {
     println("Inside ProcessRecord Method")
-    log.info("Inside processRecord method")
+    logger.info("Inside processRecord method")
     val record = getEarliestRecord(processingTable)
     safeProcessRecord(record)
   }
 
   private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
     Try {
-      log.info("Inside safeProcessRecord method")
+      logger.info("Inside safeProcessRecord method")
       process(record)
     } match {
       case Success(_) =>
-        log.info("Continuing with safeProcessRecord method")
+        logger.info("Continuing with safeProcessRecord method")
         deleteProcessingQueueRecord(record.processingQueueId)
         insertJournalRecord(record)
       case Failure(ex) =>
-        log.info("Discontinuing with safeProcessRecord method")
+        logger.info("Discontinuing with safeProcessRecord method")
         setErrors(record.processingQueueId, ex)
     }
   }
@@ -149,7 +150,7 @@ object DBPollActor {
 
   private def setErrorsQuery(id: Int, ex: Throwable, processingTable: String): String = {
     s"""
-       |update $processingTable set error_message = '${ex.getMessage}', error = '${ex.getClass.getSimpleName}'
+       |update $processingTable set error_message = '${ex.getMessage}', error = '${ex.getStackTrace.mkString("\n")}'
        | where processing_queue_id = $id
        |""".stripMargin
   }

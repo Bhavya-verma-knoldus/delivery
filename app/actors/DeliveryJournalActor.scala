@@ -2,6 +2,7 @@ package actors
 
 import akka.actor.{ActorSystem, Cancellable}
 import play.api.db.Database
+import play.api.i18n.Lang.logger
 import service.DeliveryEventConsumer
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
@@ -22,7 +23,7 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
   println("actor initialized")
 
   override def preStart(): Unit = {
-    log.info("[DeliveryJournalActor] Inside preStart")
+    logger.info("[DeliveryJournalActor] Inside preStart")
     startPolling()
   }
 
@@ -34,6 +35,7 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
     record.operation match {
       case "INSERT" | "UPDATE" =>
         deliveryEventConsumer.initialize()
+        //throw new ArithmeticException("Error occur")
       case "DELETE" => Success(())
     }
   }
