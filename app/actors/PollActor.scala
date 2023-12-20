@@ -34,7 +34,6 @@ trait PollActor extends Actor with ActorLogging {
   override def receive: Receive = {
     case Poll =>
       logger.info("Inside receive method")
-      println("Inside receive method")
       safeProcessMessage()
   }
 
@@ -45,8 +44,6 @@ trait PollActor extends Actor with ActorLogging {
     }.recover {
       case ex =>
         logger.info("Discontinuing with safeProcessMessage method")
-        println("Discontinuing with safeProcessMessage method")
-        //logger.error(cause = ex, message = "Error processing messages")
         println("Error:-"+ex.getMessage)
     }
   }
