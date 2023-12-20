@@ -2,11 +2,11 @@ package actors
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Cancellable}
 import akka.dispatch.MessageDispatcher
+import play.api.i18n.Lang.logger
 
 import javax.inject.Singleton
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.Try
-
 sealed trait PollActorMessage
 
 object PollActorMessage {
@@ -33,20 +33,18 @@ trait PollActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case Poll =>
-      log.info("Inside receive method")
-      println("Inside receive method")
+      logger.info("Inside receive method")
       safeProcessMessage()
   }
 
   private def safeProcessMessage(): Unit = {
     Try {
-      log.info("Inside safeProcessMessage method")
+      logger.info("Inside safeProcessMessage method")
       processRecord()
     }.recover {
       case ex =>
-        log.info("Discontinuing with safeProcessMessage method")
-        println("Discontinuing with safeProcessMessage method")
-        //log.error(cause = ex, message = "Error processing messages")
+        logger.info("Discontinuing with safeProcessMessage method")
+        println("Error:-"+ex.getMessage)
     }
   }
 }
