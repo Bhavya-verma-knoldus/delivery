@@ -37,24 +37,26 @@ class Deliveries @Inject()(
     }
   }
 
-  override def put(
+  override def putByOrderNumber(
     request: play.api.mvc.Request[com.nashtech.delivery.v1.models.DeliveryForm],
     merchantId: String,
+    orderNumber: String,
     body: com.nashtech.delivery.v1.models.DeliveryForm
-  ): scala.concurrent.Future[Put] = Future.successful {
-    deliveriesService.updateById(merchantId, body) match {
-      case Left(_) => Put.HTTP404
-      case Right(delivery) => Put.HTTP200(delivery)
+  ): scala.concurrent.Future[PutByOrderNumber] = Future.successful {
+    deliveriesService.updateById(merchantId, body, orderNumber) match {
+      case Left(_) => PutByOrderNumber.HTTP404
+      case Right(delivery) => PutByOrderNumber.HTTP200(delivery)
     }
   }
 
-  override def delete(
+  override def deleteByOrderNumber(
      request: play.api.mvc.Request[play.api.mvc.AnyContent],
-     merchantId: String
-   ): scala.concurrent.Future[Delete] = Future.successful {
-    deliveriesService.deleteById(merchantId) match {
-      case Left(_) => Delete.HTTP422(Error(Delete.HTTP404.toString, Seq("Record could not delete!")))
-      case Right(_) => Delete.HTTP200
+     merchantId: String,
+     orderNumber: String
+   ): scala.concurrent.Future[DeleteByOrderNumber] = Future.successful {
+    deliveriesService.deleteById(merchantId, orderNumber) match {
+      case Left(_) => DeleteByOrderNumber.HTTP422(Error(DeleteByOrderNumber.HTTP404.toString, Seq("Record could not delete!")))
+      case Right(_) => DeleteByOrderNumber.HTTP200
     }
   }
 }

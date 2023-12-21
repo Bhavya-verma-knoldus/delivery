@@ -59,54 +59,60 @@ trait DeliveriesController extends play.api.mvc.BaseController {
         }(defaultExecutionContext)
     }
 
-  sealed trait Put extends Product with Serializable
-  object Put {
-    final case class HTTP200(body: com.nashtech.delivery.v1.models.Delivery) extends Put
-    case object HTTP401 extends Put
-    case object HTTP404 extends Put
-    final case class HTTP422(body: com.nashtech.delivery.v1.models.Error) extends Put
-    final case class Undocumented(result: play.api.mvc.Result) extends Put
+  sealed trait PutByOrderNumber extends Product with Serializable
+  object PutByOrderNumber {
+    final case class HTTP200(body: com.nashtech.delivery.v1.models.Delivery) extends PutByOrderNumber
+    case object HTTP401 extends PutByOrderNumber
+    case object HTTP404 extends PutByOrderNumber
+    final case class HTTP422(body: com.nashtech.delivery.v1.models.Error) extends PutByOrderNumber
+    final case class Undocumented(result: play.api.mvc.Result) extends PutByOrderNumber
   }
 
-  def put(
+  def putByOrderNumber(
       request: play.api.mvc.Request[com.nashtech.delivery.v1.models.DeliveryForm],
       merchantId: String,
+      orderNumber: String,
       body: com.nashtech.delivery.v1.models.DeliveryForm
-  ): scala.concurrent.Future[Put]
-  final def put(merchantId: String): play.api.mvc.Action[com.nashtech.delivery.v1.models.DeliveryForm] =
+  ): scala.concurrent.Future[PutByOrderNumber]
+  final def putByOrderNumber(
+      merchantId: String,
+      orderNumber: String
+  ): play.api.mvc.Action[com.nashtech.delivery.v1.models.DeliveryForm] =
     Action.async(parse.json[com.nashtech.delivery.v1.models.DeliveryForm]) { request =>
-      put(request, merchantId, request.body)
+      putByOrderNumber(request, merchantId, orderNumber, request.body)
         .map {
-          case r: Put.HTTP200      => Status(200)(play.api.libs.json.Json.toJson(r.body))
-          case Put.HTTP401         => Status(401)(play.api.mvc.Results.EmptyContent())
-          case Put.HTTP404         => Status(404)(play.api.mvc.Results.EmptyContent())
-          case r: Put.HTTP422      => Status(422)(play.api.libs.json.Json.toJson(r.body))
-          case r: Put.Undocumented => r.result
+          case r: PutByOrderNumber.HTTP200      => Status(200)(play.api.libs.json.Json.toJson(r.body))
+          case PutByOrderNumber.HTTP401         => Status(401)(play.api.mvc.Results.EmptyContent())
+          case PutByOrderNumber.HTTP404         => Status(404)(play.api.mvc.Results.EmptyContent())
+          case r: PutByOrderNumber.HTTP422      => Status(422)(play.api.libs.json.Json.toJson(r.body))
+          case r: PutByOrderNumber.Undocumented => r.result
         }(defaultExecutionContext)
     }
 
-  sealed trait Delete extends Product with Serializable
-  object Delete {
-    case object HTTP200 extends Delete
-    case object HTTP401 extends Delete
-    case object HTTP404 extends Delete
-    final case class HTTP422(body: com.nashtech.delivery.v1.models.Error) extends Delete
-    final case class Undocumented(result: play.api.mvc.Result) extends Delete
+  sealed trait DeleteByOrderNumber extends Product with Serializable
+  object DeleteByOrderNumber {
+    case object HTTP200 extends DeleteByOrderNumber
+    case object HTTP401 extends DeleteByOrderNumber
+    case object HTTP404 extends DeleteByOrderNumber
+    final case class HTTP422(body: com.nashtech.delivery.v1.models.Error) extends DeleteByOrderNumber
+    final case class Undocumented(result: play.api.mvc.Result) extends DeleteByOrderNumber
   }
 
-  def delete(
+  def deleteByOrderNumber(
       request: play.api.mvc.Request[play.api.mvc.AnyContent],
-      merchantId: String
-  ): scala.concurrent.Future[Delete]
-  final def delete(merchantId: String): play.api.mvc.Action[play.api.mvc.AnyContent] = Action.async { request =>
-    delete(request, merchantId)
-      .map {
-        case Delete.HTTP200         => Status(200)(play.api.mvc.Results.EmptyContent())
-        case Delete.HTTP401         => Status(401)(play.api.mvc.Results.EmptyContent())
-        case Delete.HTTP404         => Status(404)(play.api.mvc.Results.EmptyContent())
-        case r: Delete.HTTP422      => Status(422)(play.api.libs.json.Json.toJson(r.body))
-        case r: Delete.Undocumented => r.result
-      }(defaultExecutionContext)
-  }
+      merchantId: String,
+      orderNumber: String
+  ): scala.concurrent.Future[DeleteByOrderNumber]
+  final def deleteByOrderNumber(merchantId: String, orderNumber: String): play.api.mvc.Action[play.api.mvc.AnyContent] =
+    Action.async { request =>
+      deleteByOrderNumber(request, merchantId, orderNumber)
+        .map {
+          case DeleteByOrderNumber.HTTP200         => Status(200)(play.api.mvc.Results.EmptyContent())
+          case DeleteByOrderNumber.HTTP401         => Status(401)(play.api.mvc.Results.EmptyContent())
+          case DeleteByOrderNumber.HTTP404         => Status(404)(play.api.mvc.Results.EmptyContent())
+          case r: DeleteByOrderNumber.HTTP422      => Status(422)(play.api.libs.json.Json.toJson(r.body))
+          case r: DeleteByOrderNumber.Undocumented => r.result
+        }(defaultExecutionContext)
+    }
 
 }
