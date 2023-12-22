@@ -24,13 +24,13 @@ class DAO @Inject()(db: Database) {
     }
   }
 
-  def updateById(merchantId: String, form: DeliveryForm, orderNumber: String): Delivery = {
+  def updateByOrderNumber(merchantId: String, form: DeliveryForm, orderNumber: String): Delivery = {
     db.withConnection { implicit connection =>
       BaseQuery.updateQuery(merchantId, form, orderNumber).as(parser().single)
     }
   }
 
-  def deleteById(merchantId: String, orderNumber: String): Delivery = {
+  def deleteByOrderNumber(merchantId: String, orderNumber: String): Delivery = {
     db.withConnection { implicit connection =>
       SQL(BaseQuery.deleteQuery(merchantId, orderNumber)).as(parser().single)
     }

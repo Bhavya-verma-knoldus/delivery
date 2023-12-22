@@ -10,13 +10,13 @@ import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[DeliveriesServiceImpl])
 trait DeliveriesService {
-  def createDelivery(delivery: DeliveryForm): Either[Seq[String],Delivery]
+  def createDelivery(delivery: DeliveryForm): Either[Seq[String], Delivery]
 
   def getById(merchantId: String, id: String): Either[Seq[String], Delivery]
 
-  def updateById(id: String, form: DeliveryForm, orderNumber: String): Either[Seq[String], Delivery]
+  def updateByOrderNumber(id: String, form: DeliveryForm, orderNumber: String): Either[Seq[String], Delivery]
 
-  def deleteById(merchantId: String, orderNumber: String):  Either[Seq[String], Delivery]
+  def deleteByOrderNumber(merchantId: String, orderNumber: String): Either[Seq[String], Delivery]
 
 }
 
@@ -30,23 +30,22 @@ class DeliveriesServiceImpl @Inject()(db: DAO) extends DeliveriesService {
     }
   }
 
-  def createDelivery(delivery: DeliveryForm): Either[Seq[String],Delivery] = {
+  def createDelivery(delivery: DeliveryForm): Either[Seq[String], Delivery] = {
     Try(db.createDelivery(delivery)) match {
       case Success(value) => Right(value)
       case Failure(e) => Left(Seq(e.getMessage))
     }
-
   }
 
-  def updateById(id: String, form: DeliveryForm, orderNumber: String): Either[Seq[String], Delivery] = {
-    Try(db.updateById(id, form, orderNumber)) match {
+  def updateByOrderNumber(id: String, form: DeliveryForm, orderNumber: String): Either[Seq[String], Delivery] = {
+    Try(db.updateByOrderNumber(id, form, orderNumber)) match {
       case Success(value) => Right(value)
       case Failure(e) => Left(Seq(e.getMessage))
     }
   }
 
-  def deleteById(merchantId: String, orderNumber: String):Either[Seq[String], Delivery] = {
-    Try(db.deleteById(merchantId, orderNumber)) match {
+  def deleteByOrderNumber(merchantId: String, orderNumber: String): Either[Seq[String], Delivery] = {
+    Try(db.deleteByOrderNumber(merchantId, orderNumber)) match {
       case Success(value) => Right(value)
       case Failure(e) => Left(Seq(e.getMessage))
     }

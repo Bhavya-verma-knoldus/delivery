@@ -43,7 +43,7 @@ class Deliveries @Inject()(
     orderNumber: String,
     body: com.nashtech.delivery.v1.models.DeliveryForm
   ): scala.concurrent.Future[PutByOrderNumber] = Future.successful {
-    deliveriesService.updateById(merchantId, body, orderNumber) match {
+    deliveriesService.updateByOrderNumber(merchantId, body, orderNumber) match {
       case Left(_) => PutByOrderNumber.HTTP404
       case Right(delivery) => PutByOrderNumber.HTTP200(delivery)
     }
@@ -54,7 +54,7 @@ class Deliveries @Inject()(
      merchantId: String,
      orderNumber: String
    ): scala.concurrent.Future[DeleteByOrderNumber] = Future.successful {
-    deliveriesService.deleteById(merchantId, orderNumber) match {
+    deliveriesService.deleteByOrderNumber(merchantId, orderNumber) match {
       case Left(_) => DeleteByOrderNumber.HTTP422(Error(DeleteByOrderNumber.HTTP404.toString, Seq("Record could not delete!")))
       case Right(_) => DeleteByOrderNumber.HTTP200
     }
