@@ -41,7 +41,6 @@ package com.nashtech.delivery.v1.models {
   )
 
   final case class DeliveryForm(
-    orderNumber: String,
     origin: com.nashtech.delivery.v1.models.Address,
     destination: com.nashtech.delivery.v1.models.Address,
     contactInfo: com.nashtech.delivery.v1.models.Contact
@@ -58,6 +57,10 @@ package com.nashtech.delivery.v1.models {
 
   package object json {
     import play.api.libs.json.__
+    import play.api.libs.json.JsString
+    import play.api.libs.json.Writes
+    import play.api.libs.functional.syntax._
+    import com.nashtech.delivery.v1.models.json._
 
     private[v1] implicit val jsonReadsUUID: play.api.libs.json.Reads[_root_.java.util.UUID] = __.read[String].map { str =>
       _root_.java.util.UUID.fromString(str)
@@ -206,16 +209,14 @@ package com.nashtech.delivery.v1.models {
 
     implicit def jsonReadsDeliveryDeliveryForm: play.api.libs.json.Reads[DeliveryForm] = {
       for {
-        orderNumber <- (__ \ "order_number").read[String]
         origin <- (__ \ "origin").read[com.nashtech.delivery.v1.models.Address]
         destination <- (__ \ "destination").read[com.nashtech.delivery.v1.models.Address]
         contactInfo <- (__ \ "contact_info").read[com.nashtech.delivery.v1.models.Contact]
-      } yield DeliveryForm(orderNumber, origin, destination, contactInfo)
+      } yield DeliveryForm(origin, destination, contactInfo)
     }
 
     def jsObjectDeliveryForm(obj: com.nashtech.delivery.v1.models.DeliveryForm): play.api.libs.json.JsObject = {
       play.api.libs.json.Json.obj(
-        "order_number" -> play.api.libs.json.JsString(obj.orderNumber),
         "origin" -> jsObjectAddress(obj.origin),
         "destination" -> jsObjectAddress(obj.destination),
         "contact_info" -> jsObjectContact(obj.contactInfo)
@@ -257,6 +258,7 @@ package com.nashtech.delivery.v1 {
     import play.api.mvc.{PathBindable, QueryStringBindable}
 
     // import models directly for backwards compatibility with prior versions of the generator
+    import Core._
 
     object Core {
       implicit def pathBindableDateTimeIso8601(implicit stringBinder: QueryStringBindable[String]): PathBindable[_root_.org.joda.time.DateTime] = ApibuilderPathBindable(ApibuilderTypes.dateTimeIso8601)
@@ -404,14 +406,15 @@ package com.nashtech.delivery.v1 {
         }
       }
 
-      override def put(
+      override def putByOrderNumber(
         merchantId: String,
+        orderNumber: String,
         deliveryForm: com.nashtech.delivery.v1.models.DeliveryForm,
         requestHeaders: Seq[(String, String)] = Nil
       )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery] = {
         val payload = play.api.libs.json.Json.toJson(deliveryForm)
 
-        _executeRequest("PUT", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery", body = Some(payload), requestHeaders = requestHeaders).map {
+        _executeRequest("PUT", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery/${play.utils.UriEncoding.encodePathSegment(orderNumber, "UTF-8")}", body = Some(payload), requestHeaders = requestHeaders).map {
           case r if r.status == 200 => _root_.com.nashtech.delivery.v1.Client.parseJson("com.nashtech.delivery.v1.models.Delivery", r, _.validate[com.nashtech.delivery.v1.models.Delivery])
           case r if r.status == 401 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
           case r if r.status == 404 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
@@ -420,11 +423,12 @@ package com.nashtech.delivery.v1 {
         }
       }
 
-      override def delete(
+      override def deleteByOrderNumber(
         merchantId: String,
+        orderNumber: String,
         requestHeaders: Seq[(String, String)] = Nil
       )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[Unit] = {
-        _executeRequest("DELETE", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery", requestHeaders = requestHeaders).map {
+        _executeRequest("DELETE", s"/${play.utils.UriEncoding.encodePathSegment(merchantId, "UTF-8")}/delivery/${play.utils.UriEncoding.encodePathSegment(orderNumber, "UTF-8")}", requestHeaders = requestHeaders).map {
           case r if r.status == 200 => ()
           case r if r.status == 401 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
           case r if r.status == 404 => throw com.nashtech.delivery.v1.errors.UnitResponse(r.status)
@@ -554,14 +558,16 @@ package com.nashtech.delivery.v1 {
       requestHeaders: Seq[(String, String)] = Nil
     )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery]
 
-    def put(
+    def putByOrderNumber(
       merchantId: String,
+      orderNumber: String,
       deliveryForm: com.nashtech.delivery.v1.models.DeliveryForm,
       requestHeaders: Seq[(String, String)] = Nil
     )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[com.nashtech.delivery.v1.models.Delivery]
 
-    def delete(
+    def deleteByOrderNumber(
       merchantId: String,
+      orderNumber: String,
       requestHeaders: Seq[(String, String)] = Nil
     )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[Unit]
   }

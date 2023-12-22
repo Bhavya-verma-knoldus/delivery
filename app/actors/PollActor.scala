@@ -7,6 +7,7 @@ import play.api.i18n.Lang.logger
 import javax.inject.Singleton
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.Try
+
 sealed trait PollActorMessage
 
 object PollActorMessage {
@@ -44,7 +45,7 @@ trait PollActor extends Actor with ActorLogging {
     }.recover {
       case ex =>
         logger.info("Discontinuing with safeProcessMessage method")
-        println("Error:-"+ex.getMessage)
+        println("Error:-" + ex.getMessage)
     }
   }
 }
