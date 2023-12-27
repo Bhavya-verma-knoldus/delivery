@@ -31,7 +31,7 @@ class Deliveries @Inject()(
      merchantId: String,
      body: com.nashtech.delivery.v1.models.DeliveryForm
    ): scala.concurrent.Future[Post] = Future.successful {
-    deliveriesService.createDelivery(body) match {
+    deliveriesService.createDelivery(body, merchantId) match {
       case Left(_) => Post.HTTP404
       case Right(delivery) => Post.HTTP200(delivery)
     }
