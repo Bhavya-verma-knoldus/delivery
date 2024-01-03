@@ -138,9 +138,10 @@ class DAO @Inject()(db: Database) {
 
   private object Parsers {
 
-    implicit val addressFormat: OFormat[Address] = Json.format[Address]
-    implicit val contactFormat: OFormat[Contact] = Json.format[Contact]
+//    implicit val addressFormat: OFormat[Address] = Json.format[Address]
+//    implicit val contactFormat: OFormat[Contact] = Json.format[Contact]
 
+    import com.nashtech.delivery.v1.models.json._
     def parseAddress(json: JsValue): JsResult[Address] = Json.fromJson[Address](json)
     def parseContact(json: JsValue): JsResult[Contact] = Json.fromJson[Contact](json)
   }
