@@ -59,22 +59,22 @@ package com.nashtech.delivery.v1.anorm.parsers {
     def parserWithPrefix(prefix: String, sep: String = "_"): RowParser[com.nashtech.delivery.v1.models.Contact] = parser(prefixOpt = Some(s"$prefix$sep"))
 
     def parser(
-      firstName: String = "first_name",
-      lastName: String = "last_name",
-      mobileNumber: String = "mobile_number",
       emailId: String = "email_id",
+      lastName: String = "last_name",
+      firstName: String = "first_name",
+      mobileNumber: String = "mobile_number",
       prefixOpt: Option[String] = None
     ): RowParser[com.nashtech.delivery.v1.models.Contact] = {
-      SqlParser.str(prefixOpt.getOrElse("") + firstName).? ~
+      SqlParser.str(prefixOpt.getOrElse("") + emailId).? ~
       SqlParser.str(prefixOpt.getOrElse("") + lastName).? ~
-      SqlParser.str(prefixOpt.getOrElse("") + mobileNumber).? ~
-      SqlParser.str(prefixOpt.getOrElse("") + emailId).? map {
-        case firstName ~ lastName ~ mobileNumber ~ emailId => {
+      SqlParser.str(prefixOpt.getOrElse("") + firstName).? ~
+      SqlParser.str(prefixOpt.getOrElse("") + mobileNumber).? map {
+        case emailId ~ lastName ~ firstName ~ mobileNumber => {
           com.nashtech.delivery.v1.models.Contact(
-            firstName = firstName,
+            emailId = emailId,
             lastName = lastName,
-            mobileNumber = mobileNumber,
-            emailId = emailId
+            firstName = firstName,
+            mobileNumber = mobileNumber
           )
         }
       }

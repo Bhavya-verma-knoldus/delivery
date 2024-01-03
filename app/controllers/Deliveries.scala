@@ -4,11 +4,10 @@ import akka.actor._
 import com.nashtech.delivery.v1.controllers.DeliveriesController
 import com.nashtech.delivery.v1.models.Error
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents, Request}
-import service.{DeliveriesService, DeliveryEventConsumer}
+import service.DeliveriesService
 
 import javax.inject.{Inject, Named}
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 class Deliveries @Inject()(
     deliveriesService: DeliveriesService,
@@ -31,7 +30,7 @@ class Deliveries @Inject()(
      merchantId: String,
      body: com.nashtech.delivery.v1.models.DeliveryForm
    ): scala.concurrent.Future[Post] = Future.successful {
-    deliveriesService.createDelivery(body) match {
+    deliveriesService.createDelivery(body, merchantId) match {
       case Left(_) => Post.HTTP404
       case Right(delivery) => Post.HTTP200(delivery)
     }

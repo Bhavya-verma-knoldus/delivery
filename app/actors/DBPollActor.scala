@@ -113,9 +113,20 @@ object DBPollActor {
   private def insertQuery(record: ProcessQueueDelivery, journalTable: String): SimpleSql[Row] = {
     SQL(
       s"""
-         |INSERT INTO $journalTable (processing_queue_id, id, order_number, merchant_id, estimated_delivery_date,
-         | origin, destination, contact_info, created_at,
-         |updated_at, journal_timestamp, journal_operation
+         |INSERT INTO $journalTable
+         |(
+         |processing_queue_id,
+         |id,
+         |order_number,
+         |merchant_id,
+         |estimated_delivery_date,
+         |origin,
+         |destination,
+         |contact_info,
+         |created_at,
+         |updated_at,
+         |journal_timestamp,
+         |journal_operation
          |)
          |VALUES
          |(
@@ -123,13 +134,13 @@ object DBPollActor {
          |{id},
          |{order_number},
          |{merchant_id},
-         |{estimated_delivery_date}::date,
+         |{estimated_delivery_date}::timestamp,
          |{origin}::jsonb,
          |{destination}::jsonb,
          |{contact_info}::jsonb,
-         |{created_at}::date,
-         |{updated_at}::date,
-         |{journal_timestamp}::date,
+         |{created_at}::timestamp,
+         |{updated_at}::timestamp,
+         |{journal_timestamp}::timestamp,
          |{journal_operation}
          |)
          |returning *
@@ -155,7 +166,7 @@ object DBPollActor {
        |""".stripMargin
   }
 
-  private def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
+   def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
     SqlParser.int("processing_queue_id") ~
       SqlParser.str("id") ~
       SqlParser.str("order_number") ~
