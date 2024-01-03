@@ -24,10 +24,10 @@ package com.nashtech.delivery.v1.models {
   )
 
   final case class Contact(
-    firstName: _root_.scala.Option[String] = None,
+    emailId: _root_.scala.Option[String] = None,
     lastName: _root_.scala.Option[String] = None,
-    mobileNumber: _root_.scala.Option[String] = None,
-    emailId: _root_.scala.Option[String] = None
+    firstName: _root_.scala.Option[String] = None,
+    mobileNumber: _root_.scala.Option[String] = None
   )
 
   final case class Delivery(
@@ -145,10 +145,11 @@ package com.nashtech.delivery.v1.models {
 
     implicit def jsonReadsDeliveryContact: play.api.libs.json.Reads[Contact] = {
       for {
-        firstName <- (__ \ "first_name").readNullable[String]
-        lastName <- (__ \ "last_name").readNullable[String]
-        mobileNumber <- (__ \ "mobile_number").readNullable[String]
         emailId <- (__ \ "email_id").readNullable[String]
+        lastName <- (__ \ "last_name").readNullable[String]
+        firstName <- (__ \ "first_name").readNullable[String]
+        mobileNumber <- (__ \ "mobile_number").readNullable[String]
+
       } yield Contact(firstName, lastName, mobileNumber, emailId)
     }
 

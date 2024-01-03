@@ -59,22 +59,22 @@ package com.nashtech.delivery.v1.anorm.parsers {
     def parserWithPrefix(prefix: String, sep: String = "_"): RowParser[com.nashtech.delivery.v1.models.Contact] = parser(prefixOpt = Some(s"$prefix$sep"))
 
     def parser(
-      firstName: String = "first_name",
-      lastName: String = "last_name",
-      mobileNumber: String = "mobile_number",
       emailId: String = "email_id",
+      lastName: String = "last_name",
+      firstName: String = "first_name",
+      mobileNumber: String = "mobile_number",
       prefixOpt: Option[String] = None
     ): RowParser[com.nashtech.delivery.v1.models.Contact] = {
-      SqlParser.str(prefixOpt.getOrElse("") + firstName).? ~
+      SqlParser.str(prefixOpt.getOrElse("") + emailId).? ~
       SqlParser.str(prefixOpt.getOrElse("") + lastName).? ~
-      SqlParser.str(prefixOpt.getOrElse("") + mobileNumber).? ~
-      SqlParser.str(prefixOpt.getOrElse("") + emailId).? map {
-        case firstName ~ lastName ~ mobileNumber ~ emailId => {
+      SqlParser.str(prefixOpt.getOrElse("") + firstName).? ~
+      SqlParser.str(prefixOpt.getOrElse("") + mobileNumber).? map {
+        case emailId ~ lastName ~ firstName ~ mobileNumber => {
           com.nashtech.delivery.v1.models.Contact(
-            firstName = firstName,
+            emailId = emailId,
             lastName = lastName,
-            mobileNumber = mobileNumber,
-            emailId = emailId
+            firstName = firstName,
+            mobileNumber = mobileNumber
           )
         }
       }
@@ -124,16 +124,19 @@ package com.nashtech.delivery.v1.anorm.parsers {
     def parserWithPrefix(prefix: String, sep: String = "_"): RowParser[com.nashtech.delivery.v1.models.DeliveryForm] = parser(prefixOpt = Some(s"$prefix$sep"))
 
     def parser(
+      orderNumber: String = "order_number",
       originPrefix: String = "origin",
       destinationPrefix: String = "destination",
       contactInfoPrefix: String = "contact_info",
       prefixOpt: Option[String] = None
     ): RowParser[com.nashtech.delivery.v1.models.DeliveryForm] = {
+      SqlParser.str(prefixOpt.getOrElse("") + orderNumber) ~
       com.nashtech.delivery.v1.anorm.parsers.Address.parserWithPrefix(prefixOpt.getOrElse("") + originPrefix) ~
       com.nashtech.delivery.v1.anorm.parsers.Address.parserWithPrefix(prefixOpt.getOrElse("") + destinationPrefix) ~
       com.nashtech.delivery.v1.anorm.parsers.Contact.parserWithPrefix(prefixOpt.getOrElse("") + contactInfoPrefix) map {
-        case origin ~ destination ~ contactInfo => {
+        case orderNumber ~ origin ~ destination ~ contactInfo => {
           com.nashtech.delivery.v1.models.DeliveryForm(
+            orderNumber = orderNumber,
             origin = origin,
             destination = destination,
             contactInfo = contactInfo

@@ -1,9 +1,11 @@
 package dao
 
-import anorm.{Row, SQL, SimpleSql}
+import anorm.{Row, RowParser, SQL, SimpleSql, SqlParser, ~}
+import com.nashtech.delivery.v1.anorm.conversions.Standard.columnToJsValue
 import com.nashtech.delivery.v1.anorm.parsers.Delivery.parser
 import com.nashtech.delivery.v1.models.json.{jsonWritesDeliveryAddress, jsonWritesDeliveryContact}
-import com.nashtech.delivery.v1.models.{Delivery, DeliveryForm}
+import com.nashtech.delivery.v1.models.{Address, Contact, Delivery, DeliveryForm}
+import org.joda.time.DateTime
 import play.api.db._
 import play.api.libs.json._
 
@@ -11,6 +13,8 @@ import javax.inject.Inject
 import scala.util.Random
 
 class DAO @Inject()(db: Database) {
+
+
 
   def createDelivery(delivery: DeliveryForm, merchantId: String): Delivery = {
     db.withConnection { implicit connection =>
@@ -20,7 +24,7 @@ class DAO @Inject()(db: Database) {
 
   def getById(merchantId: String, id: String): Delivery = {
     db.withConnection { implicit connection =>
-      SQL(BaseQuery.selectQuery(merchantId, id)).as(parser().single)
+      SQL(BaseQuery.selectQuery(merchantId, id)).as(deliveryParser().single)
     }
   }
 
@@ -100,5 +104,43 @@ class DAO @Inject()(db: Database) {
          |RETURNING *;
          |""".stripMargin
     }
+  }
+    private def deliveryParser(): RowParser[Delivery]= {
+      SqlParser.str("id") ~
+        SqlParser.str("order_number") ~
+        SqlParser.str("merchant_id") ~
+        SqlParser.get[DateTime]("estimated_delivery_date") ~
+        SqlParser.get[JsValue]("origin") ~
+        SqlParser.get[JsValue]("destination") ~
+        SqlParser.get[JsValue]("contact_info") map{
+        case id ~ orderNumber ~ merchantId ~ estimatedDeliveryDate ~ originAddressJson ~ destinationAddressJson ~ contactInfoJson => {
+          val originAddress: JsResult[Address] = Parsers.parseAddress(originAddressJson)
+          val destinationAddress: JsResult[Address] = Parsers.parseAddress(destinationAddressJson)
+          val contactInfo: JsResult[Contact] = Parsers.parseContact(contactInfoJson)
+
+          println(s"${contactInfoJson.toString()}")
+          println(s"\n\n ${originAddress.get}\n${destinationAddress.get}\n${contactInfo.get}")
+
+          com.nashtech.delivery.v1.models.Delivery(
+            id = id,
+            orderNumber = orderNumber,
+            merchantId = merchantId,
+            estimatedDeliveryDate = estimatedDeliveryDate,
+            origin = originAddress.get,
+            destination = destinationAddress.get,
+            contactInfo = contactInfo.get
+          )
+        }
+
+      }
+    }
+
+  private object Parsers {
+
+    implicit val addressFormat: OFormat[Address] = Json.format[Address]
+    implicit val contactFormat: OFormat[Contact] = Json.format[Contact]
+
+    def parseAddress(json: JsValue): JsResult[Address] = Json.fromJson[Address](json)
+    def parseContact(json: JsValue): JsResult[Contact] = Json.fromJson[Contact](json)
   }
 }
