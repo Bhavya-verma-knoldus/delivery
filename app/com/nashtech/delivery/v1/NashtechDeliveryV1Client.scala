@@ -57,10 +57,6 @@ package com.nashtech.delivery.v1.models {
 
   package object json {
     import play.api.libs.json.__
-    import play.api.libs.json.JsString
-    import play.api.libs.json.Writes
-    import play.api.libs.functional.syntax._
-    import com.nashtech.delivery.v1.models.json._
 
     private[v1] implicit val jsonReadsUUID: play.api.libs.json.Reads[_root_.java.util.UUID] = __.read[String].map { str =>
       _root_.java.util.UUID.fromString(str)
@@ -149,26 +145,25 @@ package com.nashtech.delivery.v1.models {
         lastName <- (__ \ "last_name").readNullable[String]
         firstName <- (__ \ "first_name").readNullable[String]
         mobileNumber <- (__ \ "mobile_number").readNullable[String]
-
-      } yield Contact(firstName, lastName, mobileNumber, emailId)
+      } yield Contact(emailId, lastName, firstName, mobileNumber)
     }
 
     def jsObjectContact(obj: com.nashtech.delivery.v1.models.Contact): play.api.libs.json.JsObject = {
-      (obj.firstName match {
+      (obj.emailId match {
         case None => play.api.libs.json.Json.obj()
-        case Some(x) => play.api.libs.json.Json.obj("first_name" -> play.api.libs.json.JsString(x))
+        case Some(x) => play.api.libs.json.Json.obj("email_id" -> play.api.libs.json.JsString(x))
       }) ++
       (obj.lastName match {
         case None => play.api.libs.json.Json.obj()
         case Some(x) => play.api.libs.json.Json.obj("last_name" -> play.api.libs.json.JsString(x))
       }) ++
+      (obj.firstName match {
+        case None => play.api.libs.json.Json.obj()
+        case Some(x) => play.api.libs.json.Json.obj("first_name" -> play.api.libs.json.JsString(x))
+      }) ++
       (obj.mobileNumber match {
         case None => play.api.libs.json.Json.obj()
         case Some(x) => play.api.libs.json.Json.obj("mobile_number" -> play.api.libs.json.JsString(x))
-      }) ++
-      (obj.emailId match {
-        case None => play.api.libs.json.Json.obj()
-        case Some(x) => play.api.libs.json.Json.obj("email_id" -> play.api.libs.json.JsString(x))
       })
     }
 
@@ -259,7 +254,6 @@ package com.nashtech.delivery.v1 {
     import play.api.mvc.{PathBindable, QueryStringBindable}
 
     // import models directly for backwards compatibility with prior versions of the generator
-    import Core._
 
     object Core {
       implicit def pathBindableDateTimeIso8601(implicit stringBinder: QueryStringBindable[String]): PathBindable[_root_.org.joda.time.DateTime] = ApibuilderPathBindable(ApibuilderTypes.dateTimeIso8601)

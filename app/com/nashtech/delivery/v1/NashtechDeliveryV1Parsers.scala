@@ -124,19 +124,16 @@ package com.nashtech.delivery.v1.anorm.parsers {
     def parserWithPrefix(prefix: String, sep: String = "_"): RowParser[com.nashtech.delivery.v1.models.DeliveryForm] = parser(prefixOpt = Some(s"$prefix$sep"))
 
     def parser(
-      orderNumber: String = "order_number",
       originPrefix: String = "origin",
       destinationPrefix: String = "destination",
       contactInfoPrefix: String = "contact_info",
       prefixOpt: Option[String] = None
     ): RowParser[com.nashtech.delivery.v1.models.DeliveryForm] = {
-      SqlParser.str(prefixOpt.getOrElse("") + orderNumber) ~
       com.nashtech.delivery.v1.anorm.parsers.Address.parserWithPrefix(prefixOpt.getOrElse("") + originPrefix) ~
       com.nashtech.delivery.v1.anorm.parsers.Address.parserWithPrefix(prefixOpt.getOrElse("") + destinationPrefix) ~
       com.nashtech.delivery.v1.anorm.parsers.Contact.parserWithPrefix(prefixOpt.getOrElse("") + contactInfoPrefix) map {
-        case orderNumber ~ origin ~ destination ~ contactInfo => {
+        case origin ~ destination ~ contactInfo => {
           com.nashtech.delivery.v1.models.DeliveryForm(
-            orderNumber = orderNumber,
             origin = origin,
             destination = destination,
             contactInfo = contactInfo

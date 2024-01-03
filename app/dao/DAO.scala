@@ -114,6 +114,7 @@ class DAO @Inject()(db: Database) {
         SqlParser.get[JsValue]("destination") ~
         SqlParser.get[JsValue]("contact_info") map{
         case id ~ orderNumber ~ merchantId ~ estimatedDeliveryDate ~ originAddressJson ~ destinationAddressJson ~ contactInfoJson => {
+
           val originAddress: JsResult[Address] = Parsers.parseAddress(originAddressJson)
           val destinationAddress: JsResult[Address] = Parsers.parseAddress(destinationAddressJson)
           val contactInfo: JsResult[Contact] = Parsers.parseContact(contactInfoJson)
