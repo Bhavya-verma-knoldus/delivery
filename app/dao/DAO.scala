@@ -12,9 +12,9 @@ import scala.util.Random
 
 class DAO @Inject()(db: Database) {
 
-  def createDelivery(delivery: DeliveryForm): Delivery = {
+  def createDelivery(delivery: DeliveryForm, merchantId: String): Delivery = {
     db.withConnection { implicit connection =>
-      BaseQuery.insertQuery(delivery).as(parser().single)
+      BaseQuery.insertQuery(delivery, merchantId).as(parser().single)
     }
   }
 
@@ -46,7 +46,7 @@ class DAO @Inject()(db: Database) {
       s"SELECT * FROM deliveries WHERE id = '$id' AND merchant_id = '$merchantId';"
     }
 
-    def insertQuery(delivery: DeliveryForm): SimpleSql[Row] = {
+    def insertQuery(delivery: DeliveryForm, merchantId: String): SimpleSql[Row] = {
 
       val orderNumber = generateOrderNumber()
 
@@ -58,7 +58,7 @@ class DAO @Inject()(db: Database) {
            |{id},
            |{order_number},
            |{merchant_id},
-           |{estimated_delivery_date}::date,
+           |{estimated_delivery_date}::timestamp,
            |{origin}::jsonb,
            |{destination}::jsonb,
            |{contact_info}::jsonb
@@ -67,7 +67,7 @@ class DAO @Inject()(db: Database) {
            |""".stripMargin)
         .on("id" -> Random.nextLong(10000))
         .on("order_number" -> orderNumber)
-        .on("merchant_id" -> "merchant-x")
+        .on("merchant_id" -> merchantId)
         .on("estimated_delivery_date" -> "2023-10-31 15:00:00+05:30")
         .on("origin" -> Json.toJson(delivery.origin).toString())
         .on("destination" -> Json.toJson(delivery.destination).toString())
@@ -78,14 +78,14 @@ class DAO @Inject()(db: Database) {
 
       SQL(
         s"""
-           |UPDATE deliveries SET estimated_delivery_date = {estimated_delivery_date}::date,
+           |UPDATE deliveries SET estimated_delivery_date = {estimated_delivery_date}::timestamp,
            |origin =  {origin}::jsonb,
            |destination = {destination}::jsonb,
            |contact_info = {contact_info}::jsonb
            |WHERE merchant_id = {merchant_id} AND order_number = {order_number}
            |RETURNING *;
            |""".stripMargin)
-        .on("estimated_delivery_date" -> "2023-10-31 15:00:00+05:30")
+        .on("estimated_delivery_date" -> "2023-10-31 15:01:00+05:30")
         .on("origin" -> Json.toJson(form.origin).toString())
         .on("destination" -> Json.toJson(form.destination).toString())
         .on("contact_info" -> Json.toJson(form.contactInfo).toString())
