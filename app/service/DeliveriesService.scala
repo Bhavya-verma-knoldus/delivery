@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[DeliveriesServiceImpl])
 trait DeliveriesService {
-  def createDelivery(delivery: DeliveryForm): Either[Seq[String], Delivery]
+  def createDelivery(delivery: DeliveryForm, merchantId: String): Either[Seq[String], Delivery]
 
   def getById(merchantId: String, id: String): Either[Seq[String], Delivery]
 
@@ -30,8 +30,8 @@ class DeliveriesServiceImpl @Inject()(db: DAO) extends DeliveriesService {
     }
   }
 
-  def createDelivery(delivery: DeliveryForm): Either[Seq[String], Delivery] = {
-    Try(db.createDelivery(delivery)) match {
+  def createDelivery(delivery: DeliveryForm, merchantId: String): Either[Seq[String], Delivery] = {
+    Try(db.createDelivery(delivery, merchantId)) match {
       case Success(value) => Right(value)
       case Failure(e) => Left(Seq(e.getMessage))
     }

@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProcessorFactory {
+class DeliveryEventProcessorFactory @Inject()(dao: DAO ) extends ShardRecordProcessorFactory {
   override def shardRecordProcessor(): ShardRecordProcessor = new DeliveryEventProcessor(dao)
 }
 
@@ -144,7 +144,15 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
     )
 
     val eventJson = Json.parse(eventString)
+
+
     val event = Try(eventJson.as[Order])
+
+//    event match {
+//      case Failure(exception) => ???
+//      case Success(value) => ecDao.createEcOrder(value)
+//    }
+
 
     event match {
       case Success(order) => println(s"Consumed Order. $order")
