@@ -14,8 +14,6 @@ import scala.util.Random
 
 class DAO @Inject()(db: Database) {
 
-
-
   def createDelivery(delivery: DeliveryForm, merchantId: String): Delivery = {
     db.withConnection { implicit connection =>
       BaseQuery.insertQuery(delivery, merchantId).as(parser().single)
@@ -79,7 +77,6 @@ class DAO @Inject()(db: Database) {
     }
 
     def updateQuery(merchantId: String, form: DeliveryForm, orderNumber: String): SimpleSql[Row] = {
-
       SQL(
         s"""
            |UPDATE deliveries SET estimated_delivery_date = {estimated_delivery_date}::timestamp,

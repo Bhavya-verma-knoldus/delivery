@@ -26,12 +26,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class DeliveryEventProcessorFactory @Inject()(dao: DAO) extends ShardRecordProcessorFactory {
+class DeliveryEventProcessorFactory @Inject()(dao: DAO ) extends ShardRecordProcessorFactory {
   override def shardRecordProcessor(): ShardRecordProcessor = new DeliveryEventProcessor(dao)
 }
 
 class DeliveryEventConsumer @Inject()(
-  deliveryDao: DAO
+  deliveryDao: DAO,
+  ecDao: ECDao
 ) extends LazyLogging {
 
   def initialize(): Future[Unit] = {
@@ -118,7 +119,7 @@ class DeliveryEventConsumer @Inject()(
   }
 }
 
-class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor with LazyLogging {
+class DeliveryEventProcessor @Inject()(dao: DAO, ecDao: ECDao) extends ShardRecordProcessor with LazyLogging {
 
   override def initialize(initializationInput: InitializationInput): Unit = {
     logger.info(s"Initializing record processor for shard: ${initializationInput.shardId}")
@@ -144,7 +145,15 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
     )
 
     val eventJson = Json.parse(eventString)
+
+
     val event = Try(eventJson.as[Order])
+
+    event match {
+      case Failure(exception) => ???
+      case Success(value) => ecDao.createEcOrder(value)
+    }
+
 
     event match {
       case Success(order) => println(s"Consumed Order. $order")
