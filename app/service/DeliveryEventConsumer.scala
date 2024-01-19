@@ -31,8 +31,7 @@ class DeliveryEventProcessorFactory @Inject()(dao: DAO ) extends ShardRecordProc
 }
 
 class DeliveryEventConsumer @Inject()(
-  deliveryDao: DAO,
-  ecDao: ECDao
+  deliveryDao: DAO
 ) extends LazyLogging {
 
   def initialize(): Future[Unit] = {
@@ -119,7 +118,7 @@ class DeliveryEventConsumer @Inject()(
   }
 }
 
-class DeliveryEventProcessor @Inject()(dao: DAO, ecDao: ECDao) extends ShardRecordProcessor with LazyLogging {
+class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor with LazyLogging {
 
   override def initialize(initializationInput: InitializationInput): Unit = {
     logger.info(s"Initializing record processor for shard: ${initializationInput.shardId}")
@@ -149,10 +148,10 @@ class DeliveryEventProcessor @Inject()(dao: DAO, ecDao: ECDao) extends ShardReco
 
     val event = Try(eventJson.as[Order])
 
-    event match {
-      case Failure(exception) => ???
-      case Success(value) => ecDao.createEcOrder(value)
-    }
+//    event match {
+//      case Failure(exception) => ???
+//      case Success(value) => ecDao.createEcOrder(value)
+//    }
 
 
     event match {
