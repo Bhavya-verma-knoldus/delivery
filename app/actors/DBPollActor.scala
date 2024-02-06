@@ -166,7 +166,7 @@ object DBPollActor {
        |""".stripMargin
   }
 
-  private def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
+   def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
     SqlParser.int("processing_queue_id") ~
       SqlParser.str("id") ~
       SqlParser.str("order_number") ~

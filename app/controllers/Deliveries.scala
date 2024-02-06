@@ -4,11 +4,10 @@ import akka.actor._
 import com.nashtech.delivery.v1.controllers.DeliveriesController
 import com.nashtech.delivery.v1.models.Error
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents, Request}
-import service.{DeliveriesService, DeliveryEventConsumer}
+import service.DeliveriesService
 
 import javax.inject.{Inject, Named}
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 class Deliveries @Inject()(
     deliveriesService: DeliveriesService,
