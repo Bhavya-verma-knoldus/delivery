@@ -1,5 +1,7 @@
 package service
 
+import actors.{OrderActor, ProcessRecord}
+import akka.actor.{ActorSystem, Props}
 import com.nashtech.delivery.v1.models.{Address, Contact, Delivery}
 import com.nashtech.order.v1.models.Order
 import com.nashtech.order.v1.models.json.jsonReadsOrderOrder
@@ -120,13 +122,8 @@ class DeliveryEventConsumer @Inject()(
   }
 }
 
-class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor with LazyLogging {
+class DeliveryEventProcessor @Inject()(dao: DAO, system: ActorSystem) extends ShardRecordProcessor with LazyLogging {
 
-  private val originAddress = Address(city = Some("Noida"), province = Some("Uttar Pradesh"), postal = Some("201301"), country = Some("India"))
-
-  private val destinationAddress = Address(city = Some("Kanpur"), province = Some("Uttar Pradesh"), postal = Some("201206"), country = Some("India"))
-
-  private val contactInfo = Contact(firstName = Some("John"), lastName = Some("Singh"), mobileNumber = Some("8090XXX110"))
   override def initialize(initializationInput: InitializationInput): Unit = {
     logger.info(s"Initializing record processor for shard: ${initializationInput.shardId}")
     logger.info(s"Initializing @ Sequence: ${initializationInput.extendedSequenceNumber.toString}")
@@ -142,7 +139,7 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
         Runtime.getRuntime.halt(1)
     }
 
-  private def processRecord(record: KinesisClientRecord): Either[String, Delivery] = {
+  private def processRecord(record: KinesisClientRecord): Either[String, Unit] = {
 
     val eventString = StandardCharsets.UTF_8.decode(record.data).toString
 
@@ -151,10 +148,13 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
     )
 
     val eventJson = Json.parse(eventString)
+    //database work to be done
     val event = Try(eventJson.as[Order])
 
     event match {
-      case Success(order) => Right(createDeliveryObjectUsingOrder(order))
+      case Success(order) =>
+        Right(system.actorOf(Props[OrderActor]) ! ProcessRecord(order))
+//        Right(createDeliveryObjectUsingOrder(order))
       case Failure(e) => Left(e.getMessage)
     }
   }
@@ -179,17 +179,4 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
         println("Exception while checkpointing at requested shutdown. Giving up.", e)
     }
 
-  private def createDeliveryObjectUsingOrder(order: Order) : Delivery = {
-    val currentDate = DateTime.now()
-
-    Delivery(
-      id = order.id,
-      orderNumber = order.number,
-      merchantId = order.merchantId,
-      estimatedDeliveryDate = currentDate.plusDays(3),
-      origin = originAddress,
-      destination = destinationAddress,
-      contactInfo = contactInfo
-    )
-  }
 }
