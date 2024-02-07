@@ -28,11 +28,6 @@ class OrderActor @Inject() (override val db: Database) extends DBPollActor(table
     startPolling()
   }
 
-
-  override def receive: Receive = {
-    case ProcessRecord(order) => convertOrderToDelivery(order)
-  }
-
   private def convertOrderToDelivery(order: Order) : Delivery = {
     Delivery(id = order.id,
       orderNumber = order.number,
@@ -44,6 +39,9 @@ class OrderActor @Inject() (override val db: Database) extends DBPollActor(table
     )
 
   }
-
-  override def process(record: ProcessQueueDelivery): Unit = ???
+  override def process[T](record: T): Unit = {
+    record match {
+      case order: Order => convertOrderToDelivery(order)
+    }
+  }
 }
