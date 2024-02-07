@@ -46,7 +46,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     logger.info("[DBPollActor] Pre-Start")
   }
 
-  def process(record: ProcessQueueDelivery): Unit
+  def process[T](record: T): Unit
 
   override def processRecord(): Unit = {
     println("Inside ProcessRecord Method")
@@ -58,7 +58,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
   private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
     Try {
       logger.info("Inside safeProcessRecord method")
-      process(record)
+      process[ProcessQueueDelivery](record)
     } match {
       case Success(_) =>
         logger.info("Continuing with safeProcessRecord method")
