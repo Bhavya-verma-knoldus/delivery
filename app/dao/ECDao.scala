@@ -1,7 +1,7 @@
 package dao
 
-import anorm.SQL
-import com.nashtech.order.v1.models.{Order, OrderForm}
+import anorm.{RowParser, SQL, SqlParser, ~}
+import com.nashtech.order.v1.models.Order
 import org.joda.time.DateTime
 import play.api.db.Database
 
@@ -9,9 +9,10 @@ import javax.inject.Inject
 
 class ECDao @Inject()(db: Database) {
 
-  def createEcOrder(order: Order): Unit = {
-    db.withConnection { implicit connection =>
-      SQL(BaseQuery.insertQuery(order, order.merchantId))
+  def createEcOrder(order: Order): Order = {
+    println("Inside createEcOrder")
+    db.withConnection {  implicit connection =>
+      SQL(BaseQuery.insertQuery(order, order.merchantId)).as(OrderParser().single)
     }
   }
 
@@ -37,8 +38,24 @@ class ECDao @Inject()(db: Database) {
            |${order.total},
            |'${order.submittedAt}'
            |)
+           |returning *
            |""".stripMargin
       query
     }
   }
+
+  private def OrderParser(): RowParser[Order] = {
+    SqlParser.str("id") ~
+      SqlParser.str("number") ~
+      SqlParser.str("merchant_id") ~
+      SqlParser.get[DateTime]("submitted_at") ~
+      SqlParser.double("total") map {
+
+      case id ~ number ~ merchantId ~ submittedAt ~ total =>
+        Order(
+          id, number, merchantId, submittedAt, total
+        )
+    }
+  }
+
 }
