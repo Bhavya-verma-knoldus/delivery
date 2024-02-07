@@ -116,9 +116,6 @@ class DAO @Inject()(db: Database) {
           val destinationAddress: JsResult[Address] = Parsers.parseAddress(destinationAddressJson)
           val contactInfo: JsResult[Contact] = Parsers.parseContact(contactInfoJson)
 
-          println(s"${contactInfoJson.toString()}")
-          println(s"\n\n ${originAddress.get}\n${destinationAddress.get}\n${contactInfo.get}")
-
           com.nashtech.delivery.v1.models.Delivery(
             id = id,
             orderNumber = orderNumber,
@@ -134,9 +131,6 @@ class DAO @Inject()(db: Database) {
     }
 
   private object Parsers {
-
-//    implicit val addressFormat: OFormat[Address] = Json.format[Address]
-//    implicit val contactFormat: OFormat[Contact] = Json.format[Contact]
 
     import com.nashtech.delivery.v1.models.json._
     def parseAddress(json: JsValue): JsResult[Address] = Json.fromJson[Address](json)

@@ -10,7 +10,6 @@ import javax.inject.Inject
 class ECDao @Inject()(db: Database) {
 
   def createEcOrder(order: Order): Order = {
-    println("Inside createEcOrder")
     db.withConnection {  implicit connection =>
       SQL(BaseQuery.insertQuery(order, order.merchantId)).as(OrderParser().single)
     }

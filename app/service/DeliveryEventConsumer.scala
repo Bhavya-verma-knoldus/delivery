@@ -2,7 +2,7 @@ package service
 
 import com.nashtech.order.v1.models.Order
 import com.nashtech.order.v1.models.json.jsonReadsOrderOrder
-import com.typesafe.scalalogging.LazyLogging
+import play.api.i18n.Lang.logger
 import dao.{DAO, ECDao}
 import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -32,7 +32,7 @@ class DeliveryEventProcessorFactory @Inject()(dao: ECDao ) extends ShardRecordPr
 
 class DeliveryEventConsumer @Inject()(
   deliveryDao: ECDao
-) extends LazyLogging {
+) {
 
   def initialize(): Future[Unit] = {
 
@@ -118,7 +118,7 @@ class DeliveryEventConsumer @Inject()(
   }
 }
 
-class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcessor with LazyLogging {
+class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcessor {
 
   override def initialize(initializationInput: InitializationInput): Unit = {
     logger.info(s"Initializing record processor for shard: ${initializationInput.shardId}")
@@ -139,7 +139,7 @@ class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcesso
 
     val eventString = StandardCharsets.UTF_8.decode(record.data).toString
 
-    println(
+    logger.info(
       s"Processing record pk: ${record.partitionKey()} -- Data: $eventString"
     )
 
@@ -151,14 +151,14 @@ class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcesso
     event match {
       case Success(order) =>
         val r = ecDao.createEcOrder(order)
-        println(s"Consumed Order. $order")
-        println(s"Inserted into ec_orders. $r")
-      case Failure(e) => println(s"Failed to consume. $e")
+        logger.info(s"Consumed Order. $order")
+        logger.info(s"Inserted into ec_orders. $r")
+      case Failure(e) => logger.error(s"Failed to consume. $e")
     }
   }
 
   override def leaseLost(leaseLostInput: LeaseLostInput): Unit =
-    println("Lost lease, so terminating.")
+    logger.info("Lost lease, so terminating.")
 
   override def shardEnded(shardEndedInput: ShardEndedInput): Unit =
     try {
@@ -166,7 +166,7 @@ class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcesso
       shardEndedInput.checkpointer.checkpoint()
     } catch {
       case e: Throwable =>
-        println("Exception while checkpointing at shard end. Giving up.", e)
+        logger.error("Exception while checkpointing at shard end. Giving up.", e)
     }
 
   override def shutdownRequested(shutdownRequestedInput: ShutdownRequestedInput): Unit =
@@ -174,6 +174,6 @@ class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcesso
       shutdownRequestedInput.checkpointer().checkpoint()
     } catch {
       case e: Throwable =>
-        println("Exception while checkpointing at requested shutdown. Giving up.", e)
+        logger.error("Exception while checkpointing at requested shutdown. Giving up.", e)
     }
 }
