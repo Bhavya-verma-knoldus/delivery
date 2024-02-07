@@ -3,7 +3,7 @@ package service
 import com.nashtech.order.v1.models.Order
 import com.nashtech.order.v1.models.json.jsonReadsOrderOrder
 import com.typesafe.scalalogging.LazyLogging
-import dao.DAO
+import dao.{DAO, ECDao}
 import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
@@ -118,7 +118,7 @@ class DeliveryEventConsumer @Inject()(
   }
 }
 
-class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor with LazyLogging {
+class DeliveryEventProcessor @Inject()(ecDao: ECDao) extends ShardRecordProcessor with LazyLogging {
 
   override def initialize(initializationInput: InitializationInput): Unit = {
     logger.info(s"Initializing record processor for shard: ${initializationInput.shardId}")
@@ -148,14 +148,10 @@ class DeliveryEventProcessor @Inject()(dao: DAO) extends ShardRecordProcessor wi
 
     val event = Try(eventJson.as[Order])
 
-//    event match {
-//      case Failure(exception) => ???
-//      case Success(value) => ecDao.createEcOrder(value)
-//    }
-
-
     event match {
-      case Success(order) => println(s"Consumed Order. $order")
+      case Success(order) =>
+        ecDao.createEcOrder(order)
+        println(s"Consumed Order. $order")
       case Failure(e) => println(s"Failed to consume. $e")
     }
   }

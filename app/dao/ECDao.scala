@@ -9,17 +9,13 @@ import javax.inject.Inject
 
 class ECDao @Inject()(db: Database) {
 
-  def createEcOrder(order: Order, merchantId: String): Unit = {
+  def createEcOrder(order: Order): Unit = {
     db.withConnection { implicit connection =>
-      SQL(BaseQuery.insertQuery(order, merchantId))
+      SQL(BaseQuery.insertQuery(order, order.merchantId))
     }
   }
 
   private object BaseQuery {
-
-    //    def selectQuery(merchantId: String, id: String): String = {
-    //      s"SELECT * FROM deliveries WHERE id = '$id' AND merchant_id = '$merchantId';"
-    //    }
 
     def insertQuery(order: Order, merchantId: String): String = {
 
@@ -30,18 +26,17 @@ class ECDao @Inject()(db: Database) {
            |id,
            |number,
            |merchant_id,
-           |submitted_at,
-           |total
+           |total,
+           |submitted_at
            |)
            |VALUES
            |(
            |'${order.id}',
            |'${order.number}',
            |'${merchantId}',
-           |'${DateTime.now()}',
-           |${order.total}
+           |${order.total},
+           |'${order.submittedAt}'
            |)
-           |RETURNING *
            |""".stripMargin
       query
     }
