@@ -46,7 +46,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     logger.info("[DBPollActor] Pre-Start")
   }
 
-  def process(record: ProcessQueueDelivery): Unit
+  def process[T](record: T): Unit
 
   override def processRecord(): Unit = {
     println("Inside ProcessRecord Method")
@@ -55,19 +55,22 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     safeProcessRecord(record)
   }
 
-  private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
-    Try {
-      logger.info("Inside safeProcessRecord method")
-      process(record)
-    } match {
-      case Success(_) =>
-        logger.info("Continuing with safeProcessRecord method")
-        deleteProcessingQueueRecord(record.processingQueueId)
-        insertJournalRecord(record)
-      case Failure(ex) =>
-        logger.info("Discontinuing with safeProcessRecord method")
-        setErrors(record.processingQueueId, ex)
-    }
+  private def safeProcessRecord[T](record: T): Unit = {
+        record match {
+          case record: ProcessQueueDelivery =>
+            Try {
+              logger.info("Inside safeProcessRecord method")
+              process(record)
+            } match {
+              case Success(_) =>
+                logger.info("Continuing with safeProcessRecord method")
+                deleteProcessingQueueRecord(record.processingQueueId)
+                insertJournalRecord(record)
+              case Failure(ex) =>
+                logger.info("Discontinuing with safeProcessRecord method")
+                setErrors(record.processingQueueId, ex)
+            }
+        }
   }
 
   private def deleteProcessingQueueRecord(id: Int): Int = {

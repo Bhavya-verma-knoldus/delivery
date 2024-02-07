@@ -8,6 +8,7 @@ class ActorsModule extends AbstractModule with AkkaGuiceSupport {
     // bindActor[PollActor]("poll-actor", ActorsModule.withIoDispatcher)
     // bindActor[DBPollActor]("db-poll-actor", ActorsModule.withIoDispatcher)
     bindActor[DeliveryJournalActor]("delivery-journal-actor")
+    bindActor[OrderActor]("order-actor")
   }
 }
 //
