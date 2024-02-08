@@ -13,7 +13,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Success, Try}
-
+import actors.ProcessQueueDeliveryTrait
 @Singleton
 class DeliveryJournalActor @Inject()(system: ActorSystem,
                                      deliveryEventConsumer: DeliveryEventConsumer,
@@ -31,12 +31,12 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
     system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "INSERT")(system.dispatcher)
   }
 
-  override def process(record: ProcessQueueDelivery): Unit = {
+  override def process[T <: ProcessQueueDeliveryTrait](record: T): Unit = {
     record.operation match {
       case "INSERT" | "UPDATE" =>
         deliveryEventConsumer.initialize()
-        //throw new ArithmeticException("Error occur")
       case "DELETE" => Success(())
     }
+
   }
 }

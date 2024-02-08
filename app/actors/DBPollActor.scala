@@ -7,6 +7,7 @@ import play.api.db.Database
 import play.api.i18n.Lang.logger
 import play.api.libs.json.{JsValue, Json}
 
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 case class ProcessQueueDelivery(
@@ -22,6 +23,20 @@ case class ProcessQueueDelivery(
   updatedAt: DateTime,
   operation: String
 )
+
+trait ProcessQueueDeliveryTrait {
+  val processingQueueId: Int
+  val id: String
+  val orderNumber: String
+  val merchantId: String
+  val estimateDeliveryDate: DateTime
+  val origin: JsValue
+  val destination: JsValue
+  val contactInfo: JsValue
+  val createdAt: DateTime
+  val updatedAt: DateTime
+  val operation: String
+}
 
 abstract class DBPollActor(schema: String = "public", table: String) extends PollActor {
 
@@ -46,7 +61,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     logger.info("[DBPollActor] Pre-Start")
   }
 
-  def process[T](record: T): Unit
+  def process[T <: ProcessQueueDeliveryTrait](record: T): Unit
 
   override def processRecord(): Unit = {
     println("Inside ProcessRecord Method")
@@ -58,7 +73,22 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
   private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
     Try {
       logger.info("Inside safeProcessRecord method")
-      process[ProcessQueueDelivery](record)
+      implicit def processQueueDeliveryToProcessQueueDeliveryTrait(record: ProcessQueueDelivery): ProcessQueueDeliveryTrait =  new ProcessQueueDeliveryTrait {
+        val processingQueueId: Int = record.processingQueueId
+         val id: String = record.id
+         val orderNumber: String = record.orderNumber
+         val merchantId: String = record.merchantId
+         val estimateDeliveryDate: DateTime = record.estimateDeliveryDate
+         val origin: JsValue = record.origin
+         val destination: JsValue = record.destination
+         val contactInfo: JsValue = record.contactInfo
+         val createdAt: DateTime = record.createdAt
+         val updatedAt: DateTime = record.updatedAt
+         val operation: String = record.operation
+      }
+      val res: ProcessQueueDeliveryTrait = record
+      process(res)
+
     } match {
       case Success(_) =>
         logger.info("Continuing with safeProcessRecord method")
@@ -166,7 +196,7 @@ object DBPollActor {
        |""".stripMargin
   }
 
-   def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
+   private def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
     SqlParser.int("processing_queue_id") ~
       SqlParser.str("id") ~
       SqlParser.str("order_number") ~
