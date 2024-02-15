@@ -18,7 +18,7 @@ import scala.util.{Success, Try}
 class DeliveryJournalActor @Inject()(system: ActorSystem,
                                      deliveryEventConsumer: DeliveryEventConsumer,
                                      override val db: Database)
-  extends DBPollActor(table = "deliveries") {
+  extends DBPollActor(table = "ec_orders") {
 
   println("actor initialized")
 
@@ -31,9 +31,10 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
     system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "INSERT")(system.dispatcher)
   }
 
-  override def process(record: ProcessQueueDelivery): Unit = {
+  override def process(record: ProcessQueueEcOrder): Unit = {
     record.operation match {
       case "INSERT" | "UPDATE" =>
+        println("******************************************")
         deliveryEventConsumer.initialize()
         //throw new ArithmeticException("Error occur")
       case "DELETE" => Success(())

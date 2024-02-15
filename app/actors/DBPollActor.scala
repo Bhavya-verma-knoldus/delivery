@@ -23,6 +23,18 @@ case class ProcessQueueDelivery(
   operation: String
 )
 
+case class ProcessQueueEcOrder(
+  processingQueueId: Int,
+  id:String,
+  orderNumber: String,
+  merchantId: String,
+  createdAt: DateTime,
+  updatedAt: DateTime,
+  submittedAt: DateTime,
+  total: Double,
+  operation: String
+)
+
 abstract class DBPollActor(schema: String = "public", table: String) extends PollActor {
 
   import DBPollActor._
@@ -46,7 +58,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     logger.info("[DBPollActor] Pre-Start")
   }
 
-  def process(record: ProcessQueueDelivery): Unit
+  def process(record: ProcessQueueEcOrder): Unit
 
   override def processRecord(): Unit = {
     println("Inside ProcessRecord Method")
@@ -55,7 +67,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     safeProcessRecord(record)
   }
 
-  private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
+  private def safeProcessRecord(record: ProcessQueueEcOrder): Unit = {
     Try {
       logger.info("Inside safeProcessRecord method")
       process(record)
@@ -76,7 +88,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 
-  private def insertJournalRecord(record: ProcessQueueDelivery): Unit = {
+  private def insertJournalRecord(record: ProcessQueueEcOrder): Unit = {
     db.withConnection { implicit connection =>
       insertQuery(record, journalTable).executeInsert()
     }
@@ -89,9 +101,9 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     }
   }
 
-  private def getEarliestRecord(processingTable: String): ProcessQueueDelivery = {
+  private def getEarliestRecord(processingTable: String): ProcessQueueEcOrder = {
     db.withConnection { implicit connection =>
-      SQL(baseQuery(processingTable)).as(processingQueueDeliveryParser().single)
+      SQL(baseQuery(processingTable)).as(processQueueEcOrderParser().single)
     }
   }
 }
@@ -99,7 +111,7 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
 object DBPollActor {
   private def baseQuery(processingTable: String): String =
     s"""
-       |select processing_queue_id, id, order_number, merchant_id, estimated_delivery_date, origin, destination, contact_info, created_at,
+       |select processing_queue_id, id, number, merchant_id, total, submitted_at, created_at,
        |updated_at,operation
        |from ${processingTable}
        |order by created_at asc limit 1
@@ -107,57 +119,89 @@ object DBPollActor {
 
   private def deleteQuery(id: Int, processingTable: String): String =
     s"""
-       |delete from ${processingTable} where processing_queue_id = $id
+       |delete from ${processingTable} where id = $id
        |""".stripMargin
 
-  private def insertQuery(record: ProcessQueueDelivery, journalTable: String): SimpleSql[Row] = {
-    SQL(
+  private def insertQuery(record: ProcessQueueEcOrder, journalTable: String): SimpleSql[Row] = {
+    val query =
       s"""
          |INSERT INTO $journalTable
          |(
-         |processing_queue_id,
          |id,
-         |order_number,
+         |processing_queue_id,
+         |number,
          |merchant_id,
-         |estimated_delivery_date,
-         |origin,
-         |destination,
-         |contact_info,
+         |total
+         |submitted_at,
          |created_at,
          |updated_at,
-         |journal_timestamp,
-         |journal_operation
+         |operation
          |)
          |VALUES
          |(
-         |{processing_queue_id},
-         |{id},
-         |{order_number},
-         |{merchant_id},
-         |{estimated_delivery_date}::timestamp,
-         |{origin}::jsonb,
-         |{destination}::jsonb,
-         |{contact_info}::jsonb,
-         |{created_at}::timestamp,
-         |{updated_at}::timestamp,
-         |{journal_timestamp}::timestamp,
-         |{journal_operation}
+         |'${record.id}'
+         |'${record.processingQueueId}',
+         |'${record.orderNumber}',
+         |'${record.merchantId}',
+         |${record.total},
+         |'${record.submittedAt}',
+         |'${record.createdAt}',
+         |'${record.updatedAt}',
+         |'${record.operation}'
          |)
-         |returning *
-         |""".stripMargin)
-      .on("processing_queue_id" -> record.processingQueueId)
-      .on("id" -> record.id)
-      .on("order_number" -> record.orderNumber)
-      .on("merchant_id" -> record.merchantId)
-      .on("estimated_delivery_date" -> record.estimateDeliveryDate.toString)
-      .on("origin" -> Json.toJson(record.origin).toString())
-      .on("destination" -> Json.toJson(record.destination).toString())
-      .on("contact_info" -> Json.toJson(record.contactInfo).toString())
-      .on("created_at" -> record.createdAt.toString)
-      .on("updated_at" -> record.updatedAt.toString)
-      .on("journal_timestamp" -> DateTime.now().toString)
-      .on("journal_operation" -> record.operation)
+         |RETURNING *
+         |""".stripMargin
+    SQL(query)
   }
+
+//  private def insertQuery(record: ProcessQueueDelivery, journalTable: String): SimpleSql[Row] = {
+//    SQL(
+//      s"""
+//         |INSERT INTO $journalTable
+//         |(
+//         |processing_queue_id,
+//         |id,
+//         |order_number,
+//         |merchant_id,
+//         |estimated_delivery_date,
+//         |origin,
+//         |destination,
+//         |contact_info,
+//         |created_at,
+//         |updated_at,
+//         |journal_timestamp,
+//         |journal_operation
+//         |)
+//         |VALUES
+//         |(
+//         |{processing_queue_id},
+//         |{id},
+//         |{order_number},
+//         |{merchant_id},
+//         |{estimated_delivery_date}::timestamp,
+//         |{origin}::jsonb,
+//         |{destination}::jsonb,
+//         |{contact_info}::jsonb,
+//         |{created_at}::timestamp,
+//         |{updated_at}::timestamp,
+//         |{journal_timestamp}::timestamp,
+//         |{journal_operation}
+//         |)
+//         |returning *
+//         |""".stripMargin)
+//      .on("processing_queue_id" -> record.processingQueueId)
+//      .on("id" -> record.id)
+//      .on("order_number" -> record.orderNumber)
+//      .on("merchant_id" -> record.merchantId)
+//      .on("estimated_delivery_date" -> record.estimateDeliveryDate.toString)
+//      .on("origin" -> Json.toJson(record.origin).toString())
+//      .on("destination" -> Json.toJson(record.destination).toString())
+//      .on("contact_info" -> Json.toJson(record.contactInfo).toString())
+//      .on("created_at" -> record.createdAt.toString)
+//      .on("updated_at" -> record.updatedAt.toString)
+//      .on("journal_timestamp" -> DateTime.now().toString)
+//      .on("journal_operation" -> record.operation)
+//  }
 
   private def setErrorsQuery(id: Int, ex: Throwable, processingTable: String): String = {
     s"""
@@ -166,22 +210,40 @@ object DBPollActor {
        |""".stripMargin
   }
 
-   def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
+//   def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
+//    SqlParser.int("processing_queue_id") ~
+//      SqlParser.str("id") ~
+//      SqlParser.str("order_number") ~
+//      SqlParser.str("merchant_id") ~
+//      SqlParser.get[DateTime]("estimated_delivery_date") ~
+//      SqlParser.get[JsValue]("origin") ~
+//      SqlParser.get[JsValue]("destination") ~
+//      SqlParser.get[JsValue]("contact_info") ~
+//      SqlParser.get[DateTime]("created_at") ~
+//      SqlParser.get[DateTime]("updated_at") ~
+//      SqlParser.str("operation") map {
+//
+//      case processingQueueId ~ id ~ orderNumber ~ merchantId ~ estimateDeliveryDate ~ origin ~ destination ~ contactInfo ~ createdAt ~ submittedAt ~ operation =>
+//        ProcessQueueDelivery(
+//          processingQueueId, id, orderNumber, merchantId, estimateDeliveryDate, origin, destination, contactInfo, createdAt, submittedAt, operation
+//        )
+//    }
+//  }
+
+  private def processQueueEcOrderParser(): RowParser[ProcessQueueEcOrder] = {
     SqlParser.int("processing_queue_id") ~
       SqlParser.str("id") ~
       SqlParser.str("order_number") ~
       SqlParser.str("merchant_id") ~
-      SqlParser.get[DateTime]("estimated_delivery_date") ~
-      SqlParser.get[JsValue]("origin") ~
-      SqlParser.get[JsValue]("destination") ~
-      SqlParser.get[JsValue]("contact_info") ~
       SqlParser.get[DateTime]("created_at") ~
       SqlParser.get[DateTime]("updated_at") ~
+      SqlParser.get[DateTime]("submitted_at") ~
+      SqlParser.double("total") ~
       SqlParser.str("operation") map {
 
-      case processingQueueId ~ id ~ orderNumber ~ merchantId ~ estimateDeliveryDate ~ origin ~ destination ~ contactInfo ~ createdAt ~ submittedAt ~ operation =>
-        ProcessQueueDelivery(
-          processingQueueId, id, orderNumber, merchantId, estimateDeliveryDate, origin, destination, contactInfo, createdAt, submittedAt, operation
+      case processingQueueId ~ id ~ orderNumber ~ merchantId ~ createdAt ~ updatedAt ~ submittedAt ~ total ~ operation =>
+        ProcessQueueEcOrder(
+          processingQueueId, id, orderNumber, merchantId, createdAt, updatedAt, submittedAt, total, operation
         )
     }
   }
