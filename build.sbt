@@ -41,3 +41,8 @@ ThisBuild / libraryDependencySchemes ++= Seq(
   // "ch.qos.logback" % "logback-classic" % VersionScheme.Always,
   // "ch.qos.logback" % "logback-core" % VersionScheme.Always
 )
+
+libraryDependencies ++= Seq(
+  "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
+  "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % "test"
+)
