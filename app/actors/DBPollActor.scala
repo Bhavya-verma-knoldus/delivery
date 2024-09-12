@@ -6,7 +6,8 @@ import org.joda.time.DateTime
 import play.api.db.Database
 import play.api.i18n.Lang.logger
 import play.api.libs.json.{JsValue, Json}
-
+import javax.inject.{Inject, Singleton}
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 case class ProcessQueueDelivery(
@@ -23,7 +24,7 @@ case class ProcessQueueDelivery(
   operation: String
 )
 
-abstract class DBPollActor(schema: String = "public", table: String) extends PollActor {
+abstract class DBPollActor[A] (schema: String = "public", table: String) extends PollActor {
 
   import DBPollActor._
 
@@ -46,58 +47,39 @@ abstract class DBPollActor(schema: String = "public", table: String) extends Pol
     logger.info("[DBPollActor] Pre-Start")
   }
 
-  def process(record: ProcessQueueDelivery): Unit
+  def process(record: A): Unit
 
-  override def processRecord(): Unit = {
+   def processRecord(): Unit = {
     println("Inside ProcessRecord Method")
     logger.info("Inside processRecord method")
-    val record = getEarliestRecord(processingTable)
-    safeProcessRecord(record)
+    val record = deliveryJournalActor.getEarliestRecord(processingTable)
+     deliveryJournalActor.safeProcessRecord(record)
   }
 
-  private def safeProcessRecord(record: ProcessQueueDelivery): Unit = {
-    Try {
-      logger.info("Inside safeProcessRecord method")
-      process(record)
-    } match {
-      case Success(_) =>
-        logger.info("Continuing with safeProcessRecord method")
-        deleteProcessingQueueRecord(record.processingQueueId)
-        insertJournalRecord(record)
-      case Failure(ex) =>
-        logger.info("Discontinuing with safeProcessRecord method")
-        setErrors(record.processingQueueId, ex)
-    }
-  }
-
-  private def deleteProcessingQueueRecord(id: Int): Int = {
+   def deleteProcessingQueueRecord(id: Int): Int = {
     db.withConnection { implicit connection =>
       SQL(deleteQuery(id, processingTable)).executeUpdate()
     }
   }
 
-  private def insertJournalRecord(record: ProcessQueueDelivery): Unit = {
+   def insertJournalRecord(record: ProcessQueueDelivery): Unit = {
     db.withConnection { implicit connection =>
       insertQuery(record, journalTable).executeInsert()
     }
     ()
   }
 
-  private def setErrors(processingQueueId: Int, throwable: Throwable): Int = {
+   def setErrors(processingQueueId: Int, throwable: Throwable): Int = {
     db.withConnection { implicit connection =>
       SQL(setErrorsQuery(processingQueueId, throwable, processingTable)).executeUpdate()
     }
   }
 
-  private def getEarliestRecord(processingTable: String): ProcessQueueDelivery = {
-    db.withConnection { implicit connection =>
-      SQL(baseQuery(processingTable)).as(processingQueueDeliveryParser().single)
-    }
-  }
+
 }
 
 object DBPollActor {
-  private def baseQuery(processingTable: String): String =
+   def baseQuery(processingTable: String): String =
     s"""
        |select processing_queue_id, id, order_number, merchant_id, estimated_delivery_date, origin, destination, contact_info, created_at,
        |updated_at,operation
@@ -166,7 +148,7 @@ object DBPollActor {
        |""".stripMargin
   }
 
-   def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
+    def processingQueueDeliveryParser(): RowParser[ProcessQueueDelivery] = {
     SqlParser.int("processing_queue_id") ~
       SqlParser.str("id") ~
       SqlParser.str("order_number") ~
