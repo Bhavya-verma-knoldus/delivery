@@ -31,12 +31,15 @@ class DeliveryJournalActor @Inject()(system: ActorSystem,
     system.scheduler.scheduleWithFixedDelay(FiniteDuration(5, SECONDS), delay, self, "INSERT")(system.dispatcher)
   }
 
-  override def process(record: ProcessQueueDelivery): Unit = {
-    record.operation match {
-      case "INSERT" | "UPDATE" =>
-        deliveryEventConsumer.initialize()
-        //throw new ArithmeticException("Error occur")
-      case "DELETE" => Success(())
+  override def process[T](record: T): Unit = {
+    record match {
+      case processQueueDelivery: ProcessQueueDelivery =>
+        processQueueDelivery.operation match {
+          case "INSERT" | "UPDATE" =>
+            deliveryEventConsumer.initialize()
+          //throw new ArithmeticException("Error occur")
+          case "DELETE" => Success(())
+        }
     }
   }
 }
